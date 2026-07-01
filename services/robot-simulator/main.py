@@ -50,19 +50,21 @@ def inject_fault(req: FaultRequest) -> dict:
 def _run_simulator() -> None:
     global _simulator
     _simulator = RobotSimulator()
-
-    def _on_signal(signum, frame):
-        _simulator.stop()
-        sys.exit(0)
-
-    signal.signal(signal.SIGTERM, _on_signal)
-    signal.signal(signal.SIGINT, _on_signal)
     _simulator.run()
 
 
 if __name__ == "__main__":
     sim_thread = threading.Thread(target=_run_simulator, daemon=True)
     sim_thread.start()
+
+    # Signal handlers must be registered in the main thread
+    def _on_signal(signum, frame):
+        if _simulator:
+            _simulator.stop()
+        sys.exit(0)
+
+    signal.signal(signal.SIGTERM, _on_signal)
+    signal.signal(signal.SIGINT, _on_signal)
 
     port = int(os.environ.get("SIMULATOR_PORT", "8004"))
     uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
