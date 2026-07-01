@@ -59,8 +59,16 @@ def evaluate(
     if s.obstacle_cm < 25.0 or s.bumper_active:
         safety_state = SafetyState.EMERGENCY
         motion_state = MotionState.STOPPED
-        alarms.append(_alarm(msg.robot_id, ALARM_OBSTACLE_EMERGENCY, "CRITICAL",
-                              f"Obstacle at {s.obstacle_cm:.1f} cm", s.obstacle_cm, 25.0))
+        alarms.append(
+            _alarm(
+                msg.robot_id,
+                ALARM_OBSTACLE_EMERGENCY,
+                "CRITICAL",
+                f"Obstacle at {s.obstacle_cm:.1f} cm",
+                s.obstacle_cm,
+                25.0,
+            )
+        )
     elif s.obstacle_cm < 50.0:
         safety_state = SafetyState.WARNING
         motion_state = MotionState.AVOIDING
@@ -74,8 +82,16 @@ def evaluate(
     # ── Battery state ─────────────────────────────────────────────────────────
     if s.battery_soc < 10.0:
         battery_state = BatteryState.CRITICAL
-        alarms.append(_alarm(msg.robot_id, ALARM_BATTERY_CRITICAL, "CRITICAL",
-                              f"Battery SOC {s.battery_soc:.1f}%", s.battery_soc, 10.0))
+        alarms.append(
+            _alarm(
+                msg.robot_id,
+                ALARM_BATTERY_CRITICAL,
+                "CRITICAL",
+                f"Battery SOC {s.battery_soc:.1f}%",
+                s.battery_soc,
+                10.0,
+            )
+        )
     elif s.battery_soc < 20.0:
         battery_state = BatteryState.LOW
     else:
@@ -84,12 +100,28 @@ def evaluate(
     # ── Motor health ──────────────────────────────────────────────────────────
     if s.motor_temperature_c > 70.0:
         motor_health = MotorHealth.OVERHEATED
-        alarms.append(_alarm(msg.robot_id, ALARM_MOTOR_OVERHEATED, "CRITICAL",
-                              f"Motor temp {s.motor_temperature_c:.1f}°C", s.motor_temperature_c, 70.0))
+        alarms.append(
+            _alarm(
+                msg.robot_id,
+                ALARM_MOTOR_OVERHEATED,
+                "CRITICAL",
+                f"Motor temp {s.motor_temperature_c:.1f}°C",
+                s.motor_temperature_c,
+                70.0,
+            )
+        )
     elif s.motor_current_a > 2.5:
         motor_health = MotorHealth.HIGH_LOAD
-        alarms.append(_alarm(msg.robot_id, ALARM_MOTOR_HIGH_LOAD, "WARNING",
-                              f"Motor current {s.motor_current_a:.2f} A", s.motor_current_a, 2.5))
+        alarms.append(
+            _alarm(
+                msg.robot_id,
+                ALARM_MOTOR_HIGH_LOAD,
+                "WARNING",
+                f"Motor current {s.motor_current_a:.2f} A",
+                s.motor_current_a,
+                2.5,
+            )
+        )
     else:
         motor_health = MotorHealth.NORMAL
 
@@ -103,9 +135,13 @@ def evaluate(
 
     # ── Cleaning state ────────────────────────────────────────────────────────
     if a.brush_on:
-        cleaning_state = CleaningState.ACTIVE if dirt_level != DirtLevel.CLEAN else CleaningState.ACTIVE
+        cleaning_state = (
+            CleaningState.ACTIVE if dirt_level != DirtLevel.CLEAN else CleaningState.ACTIVE
+        )
         if dirt_level == DirtLevel.DIRTY and cleaning_coverage_pct > 0:
-            cleaning_state = CleaningState.REPEAT_REQUIRED if s.dirt_score > 0.8 else CleaningState.ACTIVE
+            cleaning_state = (
+                CleaningState.REPEAT_REQUIRED if s.dirt_score > 0.8 else CleaningState.ACTIVE
+            )
     else:
         cleaning_state = CleaningState.OFF
 
@@ -121,7 +157,8 @@ def evaluate(
 
     # ── Mission state ─────────────────────────────────────────────────────────
     critical_alarm_active = any(
-        al["severity"] == "CRITICAL" for al in alarms
+        al["severity"] == "CRITICAL"
+        for al in alarms
         if al["alarm_type"] not in [ALARM_OBSTACLE_EMERGENCY]
     )
 
@@ -154,8 +191,16 @@ def evaluate(
 
     # ── Low water alarm ───────────────────────────────────────────────────────
     if s.water_level_pct < 10.0:
-        alarms.append(_alarm(msg.robot_id, ALARM_LOW_WATER, "WARNING",
-                              f"Water level {s.water_level_pct:.1f}%", s.water_level_pct, 10.0))
+        alarms.append(
+            _alarm(
+                msg.robot_id,
+                ALARM_LOW_WATER,
+                "WARNING",
+                f"Water level {s.water_level_pct:.1f}%",
+                s.water_level_pct,
+                10.0,
+            )
+        )
 
     state = DigitalTwinState(
         robot_id=msg.robot_id,
@@ -177,9 +222,14 @@ def evaluate(
     return state, alarms
 
 
-def _alarm(robot_id: str, alarm_type: str, severity: str,
-           description: str, value: float | None = None,
-           threshold: float | None = None) -> dict:
+def _alarm(
+    robot_id: str,
+    alarm_type: str,
+    severity: str,
+    description: str,
+    value: float | None = None,
+    threshold: float | None = None,
+) -> dict:
     return {
         "robot_id": robot_id,
         "timestamp": datetime.now(timezone.utc).isoformat(),

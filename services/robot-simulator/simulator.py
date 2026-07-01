@@ -6,9 +6,7 @@ import json
 import logging
 import math
 import os
-import signal
 import sys
-import threading
 import time
 import uuid
 from datetime import datetime, timezone
@@ -216,7 +214,9 @@ class RobotSimulator:
                 s.motor_current_a = 0.6 + (0.3 if s.brush_on else 0.0)
             heat = s.motor_current_a * 5.0
             cool = (s.motor_temperature_c - 25.0) * 0.05
-            s.motor_temperature_c = min(120.0, max(20.0, s.motor_temperature_c + heat * TELEMETRY_INTERVAL / 60.0 - cool))
+            s.motor_temperature_c = min(
+                120.0, max(20.0, s.motor_temperature_c + heat * TELEMETRY_INTERVAL / 60.0 - cool)
+            )
 
             # Water consumption
             if s.pump_on:
@@ -229,8 +229,9 @@ class RobotSimulator:
         """Return simulated obstacle distance in the direction of travel."""
         dr = target_row - row
         dc = target_col - col
-        nr, nc = row + (1 if dr > 0 else -1 if dr < 0 else 0), \
-                 col + (1 if dc > 0 else -1 if dc < 0 else 0)
+        nr, nc = row + (1 if dr > 0 else -1 if dr < 0 else 0), col + (
+            1 if dc > 0 else -1 if dc < 0 else 0
+        )
         if not gm.is_accessible(nr, nc):
             return 20.0
         return 200.0
@@ -296,30 +297,32 @@ class RobotSimulator:
                 break
             except Exception as exc:
                 logger.warning("MQTT connect attempt %d failed: %s", attempt, exc)
-                time.sleep(min(2 ** attempt, 30))
+                time.sleep(min(2**attempt, 30))
         else:
             logger.error("Cannot connect to MQTT after 10 attempts — exiting")
             sys.exit(1)
 
         self._mqtt_client.loop_start()
-        logger.info("Simulator started. Path length=%d, accessible cells=%d",
-                    len(self._path), gm.total_accessible_cells())
+        logger.info(
+            "Simulator started. Path length=%d, accessible cells=%d",
+            len(self._path),
+            gm.total_accessible_cells(),
+        )
 
         tick = 0
         while self._running:
             loop_start = time.monotonic()
             self._update_physics()
             telemetry = self._build_telemetry()
-            self._mqtt_client.publish(
-                Topics.TELEMETRY_RAW, json.dumps(telemetry), qos=1
-            )
+            self._mqtt_client.publish(Topics.TELEMETRY_RAW, json.dumps(telemetry), qos=1)
             if tick % 30 == 0:
                 self._publish_health()
                 logger.info(
                     "Coverage=%.1f%% battery=%.1f%% pos=(%d,%d) mode=%s",
                     telemetry["_meta"]["cleaning_coverage_pct"],
                     self._state.battery_soc,
-                    self._state.row, self._state.col,
+                    self._state.row,
+                    self._state.col,
                     self._state.mode,
                 )
             tick += 1

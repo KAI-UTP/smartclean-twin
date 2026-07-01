@@ -8,8 +8,8 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
-
 # ── Enumerations ──────────────────────────────────────────────────────────────
+
 
 class MotionState(str, Enum):
     STOPPED = "STOPPED"
@@ -91,6 +91,7 @@ class RobotCommand(str, Enum):
 
 # ── Telemetry sub-models ──────────────────────────────────────────────────────
 
+
 class PoseData(BaseModel):
     x_m: float = Field(..., ge=0.0, le=100.0)
     y_m: float = Field(..., ge=0.0, le=100.0)
@@ -122,6 +123,7 @@ class MissionData(BaseModel):
 
 # ── Telemetry message ─────────────────────────────────────────────────────────
 
+
 class TelemetryMessage(BaseModel):
     schema_version: str = Field(default="1.0")
     robot_id: str
@@ -151,6 +153,7 @@ class TelemetryMessage(BaseModel):
 
 # ── Digital Twin state message ────────────────────────────────────────────────
 
+
 class DigitalTwinState(BaseModel):
     robot_id: str
     timestamp: str
@@ -171,6 +174,7 @@ class DigitalTwinState(BaseModel):
 
 # ── AI prediction message ─────────────────────────────────────────────────────
 
+
 class PredictionMessage(BaseModel):
     robot_id: str
     timestamp: str
@@ -182,6 +186,7 @@ class PredictionMessage(BaseModel):
 
 
 # ── Alert message ─────────────────────────────────────────────────────────────
+
 
 class AlertMessage(BaseModel):
     robot_id: str
@@ -195,6 +200,7 @@ class AlertMessage(BaseModel):
 
 
 # ── Command messages ──────────────────────────────────────────────────────────
+
 
 class CommandRequest(BaseModel):
     robot_id: str
@@ -219,6 +225,7 @@ class AckMessage(BaseModel):
 
 
 # ── Service health ────────────────────────────────────────────────────────────
+
 
 class ServiceHealth(BaseModel):
     service: str

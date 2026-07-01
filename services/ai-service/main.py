@@ -51,9 +51,7 @@ _write_api = None
 def _get_write_api():
     global _influx_client, _write_api
     if _write_api is None:
-        _influx_client = InfluxDBClient(
-            url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG
-        )
+        _influx_client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
         _write_api = _influx_client.write_api(write_options=SYNCHRONOUS)
     return _write_api
 
@@ -141,7 +139,7 @@ def _start_mqtt() -> None:
             return
         except Exception as exc:
             logger.warning("MQTT attempt %d: %s", attempt, exc)
-            time.sleep(min(2 ** attempt, 30))
+            time.sleep(min(2**attempt, 30))
     logger.error("Cannot connect to MQTT — AI service failed")
 
 

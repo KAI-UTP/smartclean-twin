@@ -1,9 +1,10 @@
 """Unit tests: AI predictor (rule-based fallback — no model files needed)."""
 
-import sys, os
+import sys
+import os
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "services", "ai-service"))
 
-import pytest
 import predictor
 
 
@@ -16,30 +17,50 @@ class TestRuleFallbackMotorHealth:
 
     def test_normal_conditions(self):
         result = predictor.predict(
-            motor_current_a=0.8, motor_temperature_c=35.0, speed_mps=0.2,
-            brush_on=True, pump_on=False, battery_a=1.2, dirt_score=0.1,
+            motor_current_a=0.8,
+            motor_temperature_c=35.0,
+            speed_mps=0.2,
+            brush_on=True,
+            pump_on=False,
+            battery_a=1.2,
+            dirt_score=0.1,
         )
         assert result["motor_health_prediction"] == "NORMAL"
         assert result["model_used"] == "rule_fallback"
 
     def test_high_load_from_current(self):
         result = predictor.predict(
-            motor_current_a=3.0, motor_temperature_c=45.0, speed_mps=0.2,
-            brush_on=True, pump_on=False, battery_a=1.2, dirt_score=0.1,
+            motor_current_a=3.0,
+            motor_temperature_c=45.0,
+            speed_mps=0.2,
+            brush_on=True,
+            pump_on=False,
+            battery_a=1.2,
+            dirt_score=0.1,
         )
         assert result["motor_health_prediction"] == "HIGH_LOAD"
 
     def test_overheated(self):
         result = predictor.predict(
-            motor_current_a=1.0, motor_temperature_c=80.0, speed_mps=0.1,
-            brush_on=False, pump_on=False, battery_a=0.8, dirt_score=0.0,
+            motor_current_a=1.0,
+            motor_temperature_c=80.0,
+            speed_mps=0.1,
+            brush_on=False,
+            pump_on=False,
+            battery_a=0.8,
+            dirt_score=0.0,
         )
         assert result["motor_health_prediction"] == "OVERHEATED"
 
     def test_fault_both_high(self):
         result = predictor.predict(
-            motor_current_a=4.0, motor_temperature_c=85.0, speed_mps=0.0,
-            brush_on=True, pump_on=True, battery_a=2.0, dirt_score=0.5,
+            motor_current_a=4.0,
+            motor_temperature_c=85.0,
+            speed_mps=0.0,
+            brush_on=True,
+            pump_on=True,
+            battery_a=2.0,
+            dirt_score=0.5,
         )
         assert result["motor_health_prediction"] == "FAULT"
 

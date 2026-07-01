@@ -1,9 +1,11 @@
 """Unit tests: simulator command handling (no MQTT, no Docker)."""
 
-import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "services", "robot-simulator"))
+import sys
+import os
 
-import pytest
+sys.path.insert(
+    0, os.path.join(os.path.dirname(__file__), "..", "..", "services", "robot-simulator")
+)
 
 
 class TestSimulatorCommandApply:
@@ -11,12 +13,15 @@ class TestSimulatorCommandApply:
 
     def _make_sim(self):
         # Avoid MQTT init — patch the client
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import patch
+
         with patch("paho.mqtt.client.Client"):
             from simulator import RobotSimulator
+
             sim = RobotSimulator.__new__(RobotSimulator)
         from robot_state import RobotPhysicsState
         import grid_map as gm
+
         sim._state = RobotPhysicsState()
         sim._dirt_map = gm.generate_dirt_map(42)
         sim._path = gm.lawnmower_path()
@@ -71,11 +76,14 @@ class TestSimulatorCommandApply:
 class TestFaultInjection:
     def _make_sim(self):
         from unittest.mock import patch
+
         with patch("paho.mqtt.client.Client"):
             from simulator import RobotSimulator
+
             sim = RobotSimulator.__new__(RobotSimulator)
         from robot_state import RobotPhysicsState
         import grid_map as gm
+
         sim._state = RobotPhysicsState()
         sim._dirt_map = gm.generate_dirt_map(42)
         sim._path = gm.lawnmower_path()

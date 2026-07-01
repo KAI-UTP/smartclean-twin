@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 import paho.mqtt.client as mqtt
 import uvicorn
 from fastapi import FastAPI
-from influxdb_client import InfluxDBClient, WriteOptions
+from influxdb_client import InfluxDBClient
 from influxdb_client.client.write_api import SYNCHRONOUS
 from pydantic import ValidationError
 
@@ -51,9 +51,7 @@ _mqtt_client: mqtt.Client | None = None
 def _get_write_api():
     global _influx_client, _write_api
     if _write_api is None:
-        _influx_client = InfluxDBClient(
-            url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG
-        )
+        _influx_client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
         _write_api = _influx_client.write_api(write_options=SYNCHRONOUS)
     return _write_api
 
@@ -152,7 +150,7 @@ def _start_mqtt() -> None:
             return
         except Exception as exc:
             logger.warning("MQTT attempt %d: %s", attempt, exc)
-            time.sleep(min(2 ** attempt, 30))
+            time.sleep(min(2**attempt, 30))
     logger.error("Cannot connect to MQTT — ingestion service failed")
 
 
@@ -169,9 +167,7 @@ def health() -> dict:
         "received": _stats["received"],
         "valid": _stats["valid"],
         "invalid": _stats["invalid"],
-        "valid_rate_pct": round(
-            _stats["valid"] / max(1, _stats["received"]) * 100, 2
-        ),
+        "valid_rate_pct": round(_stats["valid"] / max(1, _stats["received"]) * 100, 2),
     }
 
 

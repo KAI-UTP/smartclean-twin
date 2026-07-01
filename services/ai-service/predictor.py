@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 
@@ -22,6 +21,7 @@ def load_models() -> bool:
     global _motor_clf, _dirt_clf, _loaded
     try:
         import joblib
+
         motor_path = MODEL_DIR / "motor_health_clf.joblib"
         dirt_path = MODEL_DIR / "dirt_level_clf.joblib"
         if motor_path.exists() and dirt_path.exists():
@@ -49,10 +49,18 @@ def predict(
 ) -> dict:
     """Return motor health and dirt level predictions with confidence."""
     if _loaded and _motor_clf is not None and _dirt_clf is not None:
-        motor_features = np.array([[
-            motor_current_a, motor_temperature_c, speed_mps,
-            float(brush_on), float(pump_on), battery_a,
-        ]])
+        motor_features = np.array(
+            [
+                [
+                    motor_current_a,
+                    motor_temperature_c,
+                    speed_mps,
+                    float(brush_on),
+                    float(pump_on),
+                    battery_a,
+                ]
+            ]
+        )
         dirt_features = np.array([[dirt_score]])
 
         motor_pred = _motor_clf.predict(motor_features)[0]

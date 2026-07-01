@@ -1,10 +1,12 @@
 """Unit tests: grid map and coverage calculation."""
 
-import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "services", "robot-simulator"))
+import sys
+import os
 
-import pytest
-import numpy as np
+sys.path.insert(
+    0, os.path.join(os.path.dirname(__file__), "..", "..", "services", "robot-simulator")
+)
+
 import grid_map as gm
 
 
@@ -45,9 +47,11 @@ class TestGridMap:
 
     def test_dirt_map_obstacles_are_zero(self):
         import numpy as _np
+
         dirt = gm.generate_dirt_map(seed=42)
         # Wall cells (value 1 in layout) must have 0 dirt
         from grid_map import _LAYOUT
+
         obstacle_mask = _LAYOUT == 1
         assert _np.all(dirt[obstacle_mask] == 0.0)
 
@@ -60,4 +64,5 @@ class TestGridMap:
         d1 = gm.generate_dirt_map(seed=7)
         d2 = gm.generate_dirt_map(seed=7)
         import numpy as _np
+
         assert _np.array_equal(d1, d2)

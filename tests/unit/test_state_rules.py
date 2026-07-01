@@ -5,14 +5,18 @@ Tests are independent of MQTT/InfluxDB — pure logic tests.
 
 import sys
 import os
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "services", "state-engine"))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared"))
 
-import pytest
 from datetime import datetime, timezone
 from smartclean_common.models import (
-    SafetyState, MotionState, BatteryState, MotorHealth,
-    MissionState, DirtLevel, CleaningState,
+    SafetyState,
+    MotionState,
+    BatteryState,
+    MotorHealth,
+    MissionState,
+    DirtLevel,
 )
 import rules
 
@@ -32,16 +36,19 @@ def _make_telemetry(**sensor_overrides) -> dict:
     }
     sensors.update(sensor_overrides)
     from smartclean_common.models import TelemetryMessage
-    return TelemetryMessage.model_validate({
-        "schema_version": "1.0",
-        "robot_id": "SCR01",
-        "timestamp": "2026-07-15T10:30:15+00:00",
-        "sequence": 1,
-        "pose": {"x_m": 1.0, "y_m": 1.0, "heading_deg": 0.0, "speed_mps": 0.2},
-        "sensors": sensors,
-        "actuators": {"brush_on": True, "pump_on": False},
-        "mission": {"mission_id": "MISSION-001", "mode": "CLEANING"},
-    })
+
+    return TelemetryMessage.model_validate(
+        {
+            "schema_version": "1.0",
+            "robot_id": "SCR01",
+            "timestamp": "2026-07-15T10:30:15+00:00",
+            "sequence": 1,
+            "pose": {"x_m": 1.0, "y_m": 1.0, "heading_deg": 0.0, "speed_mps": 0.2},
+            "sensors": sensors,
+            "actuators": {"brush_on": True, "pump_on": False},
+            "mission": {"mission_id": "MISSION-001", "mode": "CLEANING"},
+        }
+    )
 
 
 class TestSafetyRules:
@@ -147,20 +154,29 @@ class TestCoverageAndMission:
 
     def test_zero_coverage_not_started(self):
         from smartclean_common.models import TelemetryMessage
-        msg = TelemetryMessage.model_validate({
-            "schema_version": "1.0",
-            "robot_id": "SCR01",
-            "timestamp": "2026-07-15T10:30:15+00:00",
-            "sequence": 1,
-            "pose": {"x_m": 0.5, "y_m": 0.5, "heading_deg": 0.0, "speed_mps": 0.0},
-            "sensors": {
-                "obstacle_cm": 100.0, "battery_v": 12.0, "battery_soc": 100.0,
-                "battery_a": 0.5, "motor_current_a": 0.3, "motor_temperature_c": 25.0,
-                "dirt_score": 0.0, "water_level_pct": 100.0, "bumper_active": False,
-            },
-            "actuators": {"brush_on": False, "pump_on": False},
-            "mission": {"mission_id": "MISSION-001", "mode": "IDLE"},
-        })
+
+        msg = TelemetryMessage.model_validate(
+            {
+                "schema_version": "1.0",
+                "robot_id": "SCR01",
+                "timestamp": "2026-07-15T10:30:15+00:00",
+                "sequence": 1,
+                "pose": {"x_m": 0.5, "y_m": 0.5, "heading_deg": 0.0, "speed_mps": 0.0},
+                "sensors": {
+                    "obstacle_cm": 100.0,
+                    "battery_v": 12.0,
+                    "battery_soc": 100.0,
+                    "battery_a": 0.5,
+                    "motor_current_a": 0.3,
+                    "motor_temperature_c": 25.0,
+                    "dirt_score": 0.0,
+                    "water_level_pct": 100.0,
+                    "bumper_active": False,
+                },
+                "actuators": {"brush_on": False, "pump_on": False},
+                "mission": {"mission_id": "MISSION-001", "mode": "IDLE"},
+            }
+        )
         state, _ = rules.evaluate(msg, 0.0, None, 1)
         assert state.mission_state == MissionState.NOT_STARTED
 
@@ -170,14 +186,17 @@ class TestConnectionState:
         msg = _make_telemetry()
         state, _ = rules.evaluate(msg, 50.0, None, 1)
         from smartclean_common.models import ConnectionState, TwinQuality
+
         assert state.connection_state == ConnectionState.ONLINE
         assert state.twin_quality == TwinQuality.SYNCHRONIZED
 
     def test_delayed_message(self):
         from datetime import timedelta
+
         old_time = datetime.now(timezone.utc) - timedelta(seconds=5)
         msg = _make_telemetry()
         state, _ = rules.evaluate(msg, 50.0, old_time, 1)
         from smartclean_common.models import ConnectionState, TwinQuality
+
         assert state.connection_state == ConnectionState.DELAYED
         assert state.twin_quality == TwinQuality.DELAYED

@@ -21,8 +21,7 @@ if _SHARED_PATH not in sys.path:
 
 def _load_cmd_main():
     """Load command-api/main.py from explicit path, bypassing sys.path ordering."""
-    with patch("paho.mqtt.client.Client") as mock_mqtt_cls, \
-         patch("influxdb_client.InfluxDBClient"):
+    with patch("paho.mqtt.client.Client") as mock_mqtt_cls, patch("influxdb_client.InfluxDBClient"):
         mock_mqtt = MagicMock()
         mock_mqtt.is_connected.return_value = True
         mock_mqtt_cls.return_value = mock_mqtt

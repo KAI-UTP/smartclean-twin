@@ -12,13 +12,11 @@ Skip in CI unless INTEGRATION_TEST=1 is set.
 import os
 import pytest
 import time
-import json
 import requests
 
 STACK_RUNNING = os.environ.get("INTEGRATION_TEST", "0") == "1"
 skip_without_stack = pytest.mark.skipif(
-    not STACK_RUNNING,
-    reason="Set INTEGRATION_TEST=1 to run against live Docker Compose stack"
+    not STACK_RUNNING, reason="Set INTEGRATION_TEST=1 to run against live Docker Compose stack"
 )
 
 BASE_URL_CMD = "http://localhost:8000"
@@ -67,19 +65,28 @@ class TestCommandFlow:
         assert data["ack_accepted"] is True
 
     def test_resume_after_pause(self):
-        requests.post(f"{BASE_URL_CMD}/api/v1/commands",
-                      json={"robot_id": "SCR01", "command": "PAUSE"}, timeout=10)
+        requests.post(
+            f"{BASE_URL_CMD}/api/v1/commands",
+            json={"robot_id": "SCR01", "command": "PAUSE"},
+            timeout=10,
+        )
         time.sleep(0.5)
-        r = requests.post(f"{BASE_URL_CMD}/api/v1/commands",
-                          json={"robot_id": "SCR01", "command": "RESUME"}, timeout=10)
+        r = requests.post(
+            f"{BASE_URL_CMD}/api/v1/commands",
+            json={"robot_id": "SCR01", "command": "RESUME"},
+            timeout=10,
+        )
         assert r.status_code == 200
         assert r.json()["ack_received"] is True
 
     def test_command_history_grows(self):
         r1 = requests.get(f"{BASE_URL_CMD}/api/v1/commands", timeout=5)
         count_before = len(r1.json())
-        requests.post(f"{BASE_URL_CMD}/api/v1/commands",
-                      json={"robot_id": "SCR01", "command": "STOP"}, timeout=10)
+        requests.post(
+            f"{BASE_URL_CMD}/api/v1/commands",
+            json={"robot_id": "SCR01", "command": "STOP"},
+            timeout=10,
+        )
         time.sleep(0.5)
         r2 = requests.get(f"{BASE_URL_CMD}/api/v1/commands", timeout=5)
         assert len(r2.json()) > count_before

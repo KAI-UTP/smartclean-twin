@@ -54,9 +54,7 @@ _write_api = None
 def _get_write_api():
     global _influx_client, _write_api
     if _write_api is None:
-        _influx_client = InfluxDBClient(
-            url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG
-        )
+        _influx_client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
         _write_api = _influx_client.write_api(write_options=SYNCHRONOUS)
     return _write_api
 
@@ -102,7 +100,9 @@ def _write_alarm(alarm: dict) -> None:
             "fields": {
                 "description": alarm["description"],
                 "value": float(alarm["value"]) if alarm.get("value") is not None else 0.0,
-                "threshold": float(alarm["threshold"]) if alarm.get("threshold") is not None else 0.0,
+                "threshold": (
+                    float(alarm["threshold"]) if alarm.get("threshold") is not None else 0.0
+                ),
             },
             "time": datetime.now(timezone.utc),
         }
@@ -136,9 +136,7 @@ def _on_message(client: mqtt.Client, userdata, msg: mqtt.MQTTMessage) -> None:
     _last_msg_time = recv_time
     _sequence += 1
 
-    state, alarms = rules.evaluate(
-        telemetry, _cleaning_coverage_pct, prev_msg_time, _sequence
-    )
+    state, alarms = rules.evaluate(telemetry, _cleaning_coverage_pct, prev_msg_time, _sequence)
 
     state_dict = state.model_dump()
     client.publish(Topics.STATE, json.dumps(state_dict), qos=1)
@@ -152,8 +150,11 @@ def _on_message(client: mqtt.Client, userdata, msg: mqtt.MQTTMessage) -> None:
     if _sequence % 30 == 0:
         logger.info(
             "State: safety=%s battery=%s motor=%s coverage=%.1f%% alarms=%d",
-            state.safety_state, state.battery_state, state.motor_health,
-            state.cleaning_coverage_pct, len(alarms),
+            state.safety_state,
+            state.battery_state,
+            state.motor_health,
+            state.cleaning_coverage_pct,
+            len(alarms),
         )
 
 
@@ -178,7 +179,7 @@ def _start_mqtt() -> None:
             return
         except Exception as exc:
             logger.warning("MQTT attempt %d: %s", attempt, exc)
-            time.sleep(min(2 ** attempt, 30))
+            time.sleep(min(2**attempt, 30))
     logger.error("Cannot connect to MQTT — state engine failed")
 
 

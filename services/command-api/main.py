@@ -27,7 +27,7 @@ from pydantic import BaseModel
 
 sys.path.insert(0, "/app/shared")
 
-from smartclean_common.models import AckMessage, CommandRequest, RobotCommand
+from smartclean_common.models import CommandRequest, RobotCommand
 from smartclean_common.topics import Topics
 
 logger = logging.getLogger(__name__)
@@ -58,9 +58,7 @@ _write_api = None
 def _get_write_api():
     global _influx_client, _write_api
     if _write_api is None:
-        _influx_client = InfluxDBClient(
-            url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG
-        )
+        _influx_client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
         _write_api = _influx_client.write_api(write_options=SYNCHRONOUS)
     return _write_api
 
@@ -137,7 +135,7 @@ def _start_mqtt() -> None:
             return
         except Exception as exc:
             logger.warning("MQTT attempt %d: %s", attempt, exc)
-            time.sleep(min(2 ** attempt, 30))
+            time.sleep(min(2**attempt, 30))
     logger.error("Cannot connect to MQTT broker")
 
 
@@ -182,11 +180,13 @@ def issue_command(req: CommandRequest) -> CommandResponse:
 
     # Determine MQTT topic
     motion_commands = {
-        RobotCommand.START, RobotCommand.PAUSE, RobotCommand.RESUME,
-        RobotCommand.STOP, RobotCommand.RETURN_HOME,
+        RobotCommand.START,
+        RobotCommand.PAUSE,
+        RobotCommand.RESUME,
+        RobotCommand.STOP,
+        RobotCommand.RETURN_HOME,
     }
-    topic = (Topics.COMMAND_MOTION if req.command in motion_commands
-             else Topics.COMMAND_CLEANING)
+    topic = Topics.COMMAND_MOTION if req.command in motion_commands else Topics.COMMAND_CLEANING
 
     payload = {
         "command_id": cmd_id,

@@ -1,6 +1,8 @@
 """Unit tests: command validation logic."""
 
-import sys, os
+import sys
+import os
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shared"))
 
 import pytest
@@ -9,10 +11,20 @@ from smartclean_common.models import CommandRequest, RobotCommand
 
 
 class TestValidCommands:
-    @pytest.mark.parametrize("cmd", [
-        "START", "PAUSE", "RESUME", "STOP", "RETURN_HOME",
-        "BRUSH_ON", "BRUSH_OFF", "PUMP_ON", "PUMP_OFF",
-    ])
+    @pytest.mark.parametrize(
+        "cmd",
+        [
+            "START",
+            "PAUSE",
+            "RESUME",
+            "STOP",
+            "RETURN_HOME",
+            "BRUSH_ON",
+            "BRUSH_OFF",
+            "PUMP_ON",
+            "PUMP_OFF",
+        ],
+    )
     def test_valid_command(self, cmd: str):
         req = CommandRequest(robot_id="SCR01", command=RobotCommand(cmd))
         assert req.command.value == cmd

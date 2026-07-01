@@ -30,7 +30,7 @@ def build_client(
     def _on_connect(c: mqtt.Client, userdata, flags, rc: int) -> None:
         if rc == 0:
             logger.info("MQTT connected (host=%s port=%d)", host, port)
-            for topic in (subscriptions or []):
+            for topic in subscriptions or []:
                 c.subscribe(topic)
                 logger.info("Subscribed to %s", topic)
         else:
@@ -46,6 +46,6 @@ def build_client(
             return client
         except Exception as exc:
             logger.warning("MQTT connect attempt %d failed: %s", attempt, exc)
-            time.sleep(min(2 ** attempt, 30))
+            time.sleep(min(2**attempt, 30))
 
     raise RuntimeError("Could not connect to MQTT broker after 10 attempts")

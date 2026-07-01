@@ -7,7 +7,7 @@ import os
 from datetime import datetime, timezone
 from typing import Any
 
-from influxdb_client import InfluxDBClient, WriteOptions
+from influxdb_client import InfluxDBClient
 from influxdb_client.client.write_api import SYNCHRONOUS
 
 logger = logging.getLogger(__name__)
@@ -22,8 +22,12 @@ def _get_client() -> tuple[InfluxDBClient, str, str]:
     return client, org, bucket
 
 
-def write_points(measurement: str, tags: dict[str, str], fields: dict[str, Any],
-                 timestamp: datetime | None = None) -> None:
+def write_points(
+    measurement: str,
+    tags: dict[str, str],
+    fields: dict[str, Any],
+    timestamp: datetime | None = None,
+) -> None:
     """Write a single data point to InfluxDB."""
     client, org, bucket = _get_client()
     write_api = client.write_api(write_options=SYNCHRONOUS)

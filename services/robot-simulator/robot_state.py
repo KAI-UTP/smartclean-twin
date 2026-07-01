@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import math
 import threading
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 @dataclass
@@ -60,9 +58,11 @@ class RobotPhysicsState:
     @property
     def x_m(self) -> float:
         from grid_map import CELL_SIZE_M
+
         return self.col * CELL_SIZE_M
 
     @property
     def y_m(self) -> float:
         from grid_map import CELL_SIZE_M
+
         return self.row * CELL_SIZE_M

@@ -26,9 +26,8 @@ import joblib
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
 
 MODEL_DIR = Path(os.environ.get("MODEL_DIR", "/app/models"))
 MODEL_DIR.mkdir(parents=True, exist_ok=True)
@@ -36,6 +35,7 @@ SEED = 42
 
 
 # ── Dataset generation ────────────────────────────────────────────────────────
+
 
 def _label_motor_health(row: pd.Series) -> str:
     if row["motor_current_a"] > 3.5 and row["motor_temperature_c"] > 70:
@@ -57,15 +57,17 @@ def _label_dirt_level(dirt_score: float) -> str:
 
 def generate_dataset(n: int = 5000, seed: int = SEED) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
-    df = pd.DataFrame({
-        "motor_current_a":     rng.uniform(0.3, 4.0, n),
-        "motor_temperature_c": rng.uniform(20.0, 95.0, n),
-        "speed_mps":           rng.uniform(0.0, 0.5, n),
-        "brush_on":            rng.integers(0, 2, n).astype(float),
-        "pump_on":             rng.integers(0, 2, n).astype(float),
-        "battery_a":           rng.uniform(0.5, 3.5, n),
-        "dirt_score":          rng.uniform(0.0, 1.0, n),
-    })
+    df = pd.DataFrame(
+        {
+            "motor_current_a": rng.uniform(0.3, 4.0, n),
+            "motor_temperature_c": rng.uniform(20.0, 95.0, n),
+            "speed_mps": rng.uniform(0.0, 0.5, n),
+            "brush_on": rng.integers(0, 2, n).astype(float),
+            "pump_on": rng.integers(0, 2, n).astype(float),
+            "battery_a": rng.uniform(0.5, 3.5, n),
+            "dirt_score": rng.uniform(0.0, 1.0, n),
+        }
+    )
     df["motor_health_label"] = df.apply(_label_motor_health, axis=1)
     df["dirt_level_label"] = df["dirt_score"].apply(_label_dirt_level)
     return df
@@ -74,8 +76,12 @@ def generate_dataset(n: int = 5000, seed: int = SEED) -> pd.DataFrame:
 # ── Training ──────────────────────────────────────────────────────────────────
 
 MOTOR_FEATURES = [
-    "motor_current_a", "motor_temperature_c", "speed_mps",
-    "brush_on", "pump_on", "battery_a",
+    "motor_current_a",
+    "motor_temperature_c",
+    "speed_mps",
+    "brush_on",
+    "pump_on",
+    "battery_a",
 ]
 DIRT_FEATURES = ["dirt_score"]
 
@@ -96,7 +102,7 @@ def train_and_save(df: pd.DataFrame) -> dict[str, float]:
     print(f"\nMotor Health Classifier — test accuracy: {acc_motor:.4f}")
     print(classification_report(y_te, clf_motor.predict(X_te)))
     joblib.dump(clf_motor, MODEL_DIR / "motor_health_clf.joblib")
-    print(f"Saved motor_health_clf.joblib")
+    print("Saved motor_health_clf.joblib")
 
     # Dirt level classifier
     X_dirt = df[DIRT_FEATURES].values
@@ -111,7 +117,7 @@ def train_and_save(df: pd.DataFrame) -> dict[str, float]:
     print(f"\nDirt Level Classifier — test accuracy: {acc_dirt:.4f}")
     print(classification_report(y_te2, clf_dirt.predict(X_te2)))
     joblib.dump(clf_dirt, MODEL_DIR / "dirt_level_clf.joblib")
-    print(f"Saved dirt_level_clf.joblib")
+    print("Saved dirt_level_clf.joblib")
 
     return results
 
