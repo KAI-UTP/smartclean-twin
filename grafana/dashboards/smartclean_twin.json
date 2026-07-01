@@ -1,5 +1,5 @@
-{
-  "title": "SmartClean Twin — Robot Dashboard",
+﻿{
+  "title": "SmartClean Twin â€” Robot Dashboard",
   "uid": "smartclean-main",
   "version": 1,
   "refresh": "5s",
@@ -26,7 +26,7 @@
       "targets": [{
         "refId": "A",
         "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -1m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"battery_soc\") |> last()"
+        "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"battery_soc\") |> last()"
       }]
     },
     {
@@ -72,7 +72,7 @@
       "targets": [{
         "refId": "A",
         "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -1m) |> filter(fn: (r) => r._measurement == \"robot_state\" and r._field == \"cleaning_coverage_pct\") |> last()"
+        "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_state\" and r._field == \"cleaning_coverage_pct\") |> last()"
       }]
     },
     {
@@ -111,7 +111,7 @@
     },
     {
       "id": 6,
-      "title": "Motor Temperature (°C)",
+      "title": "Motor Temperature (Â°C)",
       "type": "timeseries",
       "gridPos": {"h": 6, "w": 12, "x": 0, "y": 12},
       "fieldConfig": {
@@ -140,7 +140,7 @@
       "targets": [{
         "refId": "A",
         "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -1m) |> filter(fn: (r) => r._measurement == \"robot_state\" and r._field == \"safety_state\") |> last()"
+        "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_state\" and r._field == \"safety_state\") |> last()"
       }]
     },
     {
@@ -151,7 +151,7 @@
       "targets": [{
         "refId": "A",
         "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -1m) |> filter(fn: (r) => r._measurement == \"robot_state\" and r._field == \"mission_state\") |> last()"
+        "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_state\" and r._field == \"mission_state\") |> last()"
       }]
     },
     {
@@ -162,7 +162,7 @@
       "targets": [{
         "refId": "A",
         "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -1m) |> filter(fn: (r) => r._measurement == \"robot_prediction\" and r._field == \"motor_health\") |> last()"
+        "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_prediction\" and r._field == \"motor_health\") |> last()"
       }]
     },
     {
@@ -173,7 +173,7 @@
       "targets": [{
         "refId": "A",
         "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -1m) |> filter(fn: (r) => r._measurement == \"robot_prediction\" and r._field == \"dirt_level\") |> last()"
+        "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_prediction\" and r._field == \"dirt_level\") |> last()"
       }]
     },
     {
@@ -194,7 +194,7 @@
       "targets": [{
         "refId": "A",
         "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -1m) |> filter(fn: (r) => r._measurement == \"robot_state\" and r._field == \"alarm_count\") |> last()"
+        "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_state\" and r._field == \"alarm_count\") |> last()"
       }]
     },
     {
@@ -246,3 +246,4 @@
   "schemaVersion": 36,
   "tags": ["smartclean", "digital-twin", "robot"]
 }
+
