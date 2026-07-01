@@ -138,8 +138,8 @@
       "type": "stat",
       "gridPos": {"h": 6, "w": 6, "x": 12, "y": 12},
       "options": {
-        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "/_value/", "values": false},
-        "textMode": "value",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto",
         "colorMode": "background",
         "graphMode": "none",
         "justifyMode": "center"
@@ -147,17 +147,19 @@
       "fieldConfig": {
         "defaults": {
           "mappings": [
-            {"type": "value", "options": {"SAFE":        {"text": "SAFE",        "color": "green",  "index": 0}}},
-            {"type": "value", "options": {"WARNING":     {"text": "WARNING",     "color": "orange", "index": 1}}},
-            {"type": "value", "options": {"EMERGENCY":   {"text": "EMERGENCY",   "color": "red",    "index": 2}}},
-            {"type": "value", "options": {"UNKNOWN":     {"text": "UNKNOWN",     "color": "gray",   "index": 3}}}
-          ]
+            {"type": "value", "options": {
+              "1": {"text": "SAFE",      "color": "green",  "index": 0},
+              "2": {"text": "WARNING",   "color": "orange", "index": 1},
+              "3": {"text": "EMERGENCY", "color": "red",    "index": 2}
+            }}
+          ],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
         }
       },
       "targets": [{
         "refId": "A",
         "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_state\" and r._field == \"safety_state\") |> last()"
+        "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_state\" and r._field == \"safety_state\") |> last() |> map(fn: (r) => ({r with _value: if r._value == \"SAFE\" then 1 else if r._value == \"WARNING\" then 2 else if r._value == \"EMERGENCY\" then 3 else 0}))"
       }]
     },
     {
@@ -166,8 +168,8 @@
       "type": "stat",
       "gridPos": {"h": 6, "w": 6, "x": 18, "y": 12},
       "options": {
-        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "/_value/", "values": false},
-        "textMode": "value",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto",
         "colorMode": "background",
         "graphMode": "none",
         "justifyMode": "center"
@@ -175,18 +177,21 @@
       "fieldConfig": {
         "defaults": {
           "mappings": [
-            {"type": "value", "options": {"NOT_STARTED": {"text": "NOT STARTED", "color": "gray",   "index": 0}}},
-            {"type": "value", "options": {"RUNNING":     {"text": "RUNNING",     "color": "green",  "index": 1}}},
-            {"type": "value", "options": {"PAUSED":      {"text": "PAUSED",      "color": "orange", "index": 2}}},
-            {"type": "value", "options": {"COMPLETED":   {"text": "COMPLETED",   "color": "blue",   "index": 3}}},
-            {"type": "value", "options": {"ABORTED":     {"text": "ABORTED",     "color": "red",    "index": 4}}}
-          ]
+            {"type": "value", "options": {
+              "0": {"text": "NOT STARTED", "color": "gray",   "index": 0},
+              "1": {"text": "RUNNING",     "color": "green",  "index": 1},
+              "2": {"text": "PAUSED",      "color": "orange", "index": 2},
+              "3": {"text": "COMPLETED",   "color": "blue",   "index": 3},
+              "4": {"text": "ABORTED",     "color": "red",    "index": 4}
+            }}
+          ],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
         }
       },
       "targets": [{
         "refId": "A",
         "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_state\" and r._field == \"mission_state\") |> last()"
+        "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_state\" and r._field == \"mission_state\") |> last() |> map(fn: (r) => ({r with _value: if r._value == \"NOT_STARTED\" then 0 else if r._value == \"RUNNING\" then 1 else if r._value == \"PAUSED\" then 2 else if r._value == \"COMPLETED\" then 3 else if r._value == \"ABORTED\" then 4 else -1}))"
       }]
     },
     {
@@ -195,8 +200,8 @@
       "type": "stat",
       "gridPos": {"h": 4, "w": 8, "x": 0, "y": 18},
       "options": {
-        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "/_value/", "values": false},
-        "textMode": "value",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto",
         "colorMode": "background",
         "graphMode": "none",
         "justifyMode": "center"
@@ -204,17 +209,20 @@
       "fieldConfig": {
         "defaults": {
           "mappings": [
-            {"type": "value", "options": {"NORMAL":     {"text": "NORMAL",     "color": "green",  "index": 0}}},
-            {"type": "value", "options": {"HIGH_LOAD":  {"text": "HIGH LOAD",  "color": "orange", "index": 1}}},
-            {"type": "value", "options": {"OVERHEATED": {"text": "OVERHEATED", "color": "red",    "index": 2}}},
-            {"type": "value", "options": {"FAULT":      {"text": "FAULT",      "color": "dark-red","index": 3}}}
-          ]
+            {"type": "value", "options": {
+              "1": {"text": "NORMAL",     "color": "green",    "index": 0},
+              "2": {"text": "HIGH LOAD",  "color": "orange",   "index": 1},
+              "3": {"text": "OVERHEATED", "color": "red",      "index": 2},
+              "4": {"text": "FAULT",      "color": "dark-red", "index": 3}
+            }}
+          ],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
         }
       },
       "targets": [{
         "refId": "A",
         "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_prediction\" and r._field == \"motor_health\") |> last()"
+        "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_prediction\" and r._field == \"motor_health\") |> last() |> map(fn: (r) => ({r with _value: if r._value == \"NORMAL\" then 1 else if r._value == \"HIGH_LOAD\" then 2 else if r._value == \"OVERHEATED\" then 3 else if r._value == \"FAULT\" then 4 else 0}))"
       }]
     },
     {
@@ -223,8 +231,8 @@
       "type": "stat",
       "gridPos": {"h": 4, "w": 8, "x": 8, "y": 18},
       "options": {
-        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "/_value/", "values": false},
-        "textMode": "value",
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "auto",
         "colorMode": "background",
         "graphMode": "none",
         "justifyMode": "center"
@@ -232,16 +240,19 @@
       "fieldConfig": {
         "defaults": {
           "mappings": [
-            {"type": "value", "options": {"CLEAN":    {"text": "CLEAN",    "color": "green",  "index": 0}}},
-            {"type": "value", "options": {"MODERATE": {"text": "MODERATE", "color": "orange", "index": 1}}},
-            {"type": "value", "options": {"DIRTY":    {"text": "DIRTY",    "color": "red",    "index": 2}}}
-          ]
+            {"type": "value", "options": {
+              "1": {"text": "CLEAN",    "color": "green",  "index": 0},
+              "2": {"text": "MODERATE", "color": "orange", "index": 1},
+              "3": {"text": "DIRTY",    "color": "red",    "index": 2}
+            }}
+          ],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
         }
       },
       "targets": [{
         "refId": "A",
         "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_prediction\" and r._field == \"dirt_level\") |> last()"
+        "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_prediction\" and r._field == \"dirt_level\") |> last() |> map(fn: (r) => ({r with _value: if r._value == \"CLEAN\" then 1 else if r._value == \"MODERATE\" then 2 else if r._value == \"DIRTY\" then 3 else 0}))"
       }]
     },
     {
@@ -250,7 +261,7 @@
       "type": "stat",
       "gridPos": {"h": 4, "w": 8, "x": 16, "y": 18},
       "options": {
-        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "/_value/", "values": false},
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
         "textMode": "value",
         "colorMode": "background",
         "graphMode": "none",
