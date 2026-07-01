@@ -133,7 +133,7 @@ def _on_message(client: mqtt.Client, userdata, msg: mqtt.MQTTMessage) -> None:
 
     state, alarms = rules.evaluate(telemetry, _cleaning_coverage_pct, prev_msg_time, _sequence)
 
-    state_dict = state.model_dump()
+    state_dict = state.model_dump(mode="json")
     client.publish(Topics.STATE, json.dumps(state_dict), qos=1)
 
     for alarm in alarms:

@@ -1,4 +1,4 @@
-{
+﻿{
   "title": "SmartClean Twin - Robot Dashboard",
   "uid": "smartclean-main",
   "version": 1,
@@ -138,7 +138,7 @@
       "type": "stat",
       "gridPos": {"h": 6, "w": 6, "x": 12, "y": 12},
       "options": {
-        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "/_value/", "values": false},
         "textMode": "value",
         "colorMode": "background",
         "graphMode": "none",
@@ -166,7 +166,7 @@
       "type": "stat",
       "gridPos": {"h": 6, "w": 6, "x": 18, "y": 12},
       "options": {
-        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "/_value/", "values": false},
         "textMode": "value",
         "colorMode": "background",
         "graphMode": "none",
@@ -195,7 +195,7 @@
       "type": "stat",
       "gridPos": {"h": 4, "w": 8, "x": 0, "y": 18},
       "options": {
-        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "/_value/", "values": false},
         "textMode": "value",
         "colorMode": "background",
         "graphMode": "none",
@@ -223,7 +223,7 @@
       "type": "stat",
       "gridPos": {"h": 4, "w": 8, "x": 8, "y": 18},
       "options": {
-        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "/_value/", "values": false},
         "textMode": "value",
         "colorMode": "background",
         "graphMode": "none",
@@ -250,7 +250,7 @@
       "type": "stat",
       "gridPos": {"h": 4, "w": 8, "x": 16, "y": 18},
       "options": {
-        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "/_value/", "values": false},
         "textMode": "value",
         "colorMode": "background",
         "graphMode": "none",
