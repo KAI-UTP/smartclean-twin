@@ -1,0 +1,17 @@
+.env
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+*.log
+*.model
+models/
+grafana/data/
+influxdb/data/
+*.ipynb_checkpoints/
+.DS_Store

@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SmartClean Command Request",
+  "type": "object",
+  "required": ["robot_id", "command"],
+  "properties": {
+    "robot_id": {"type": "string"},
+    "command": {
+      "type": "string",
+      "enum": ["START", "PAUSE", "RESUME", "STOP", "RETURN_HOME",
+               "BRUSH_ON", "BRUSH_OFF", "PUMP_ON", "PUMP_OFF"]
+    }
+  }
+}

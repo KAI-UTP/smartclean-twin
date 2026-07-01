@@ -1,0 +1,175 @@
+version: "3.9"
+
+# SmartClean Twin — Docker Compose deployment
+# Usage: docker compose up --build
+# Scale example: docker compose up --scale telemetry-ingestion=2
+
+x-common-env: &common-env
+  MQTT_HOST: mosquitto
+  MQTT_PORT: "1883"
+  INFLUXDB_URL: http://influxdb:8086
+  INFLUXDB_TOKEN: ${INFLUXDB_TOKEN:-smartclean-super-secret-token}
+  INFLUXDB_ORG: ${INFLUXDB_ORG:-smartclean}
+  INFLUXDB_BUCKET: ${INFLUXDB_BUCKET:-smartclean_twin}
+
+services:
+
+  # ── MQTT Broker ─────────────────────────────────────────────────────────────
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: smartclean-mosquitto
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mosquitto_sub", "-t", "$$SYS/#", "-C", "1", "-i", "hc", "-W", "3"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── InfluxDB ─────────────────────────────────────────────────────────────────
+  influxdb:
+    image: influxdb:2.7
+    container_name: smartclean-influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: ${DOCKER_INFLUXDB_INIT_MODE:-setup}
+      DOCKER_INFLUXDB_INIT_USERNAME: ${DOCKER_INFLUXDB_INIT_USERNAME:-admin}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${DOCKER_INFLUXDB_INIT_PASSWORD:-adminpassword}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUXDB_ORG:-smartclean}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUXDB_BUCKET:-smartclean_twin}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN:-smartclean-super-secret-token}
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ── Grafana ───────────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: smartclean-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD:-admin}
+      GF_INSTALL_PLUGINS: ""
+      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN:-smartclean-super-secret-token}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Robot Simulator ───────────────────────────────────────────────────────────
+  robot-simulator:
+    build:
+      context: .
+      dockerfile: services/robot-simulator/Dockerfile
+    container_name: smartclean-simulator
+    ports:
+      - "8004:8004"
+    environment:
+      <<: *common-env
+      ROBOT_ID: ${ROBOT_ID:-SCR01}
+      TELEMETRY_INTERVAL_S: ${TELEMETRY_INTERVAL_S:-1.0}
+      SIMULATOR_SEED: ${SIMULATOR_SEED:-42}
+      SIMULATOR_PORT: "8004"
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Telemetry Ingestion ───────────────────────────────────────────────────────
+  telemetry-ingestion:
+    build:
+      context: .
+      dockerfile: services/telemetry-ingestion/Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      <<: *common-env
+      TELEMETRY_INGESTION_PORT: "8001"
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+      influxdb:
+        condition: service_healthy
+    restart: unless-stopped
+    # Scale with: docker compose up --scale telemetry-ingestion=2
+    # Uses MQTT subscribe (fan-out) — safe to scale
+
+  # ── State Engine ──────────────────────────────────────────────────────────────
+  state-engine:
+    build:
+      context: .
+      dockerfile: services/state-engine/Dockerfile
+    container_name: smartclean-state-engine
+    ports:
+      - "8002:8002"
+    environment:
+      <<: *common-env
+      STATE_ENGINE_PORT: "8002"
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+      influxdb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── AI Service ────────────────────────────────────────────────────────────────
+  ai-service:
+    build:
+      context: .
+      dockerfile: services/ai-service/Dockerfile
+    container_name: smartclean-ai-service
+    ports:
+      - "8003:8003"
+    environment:
+      <<: *common-env
+      AI_SERVICE_PORT: "8003"
+      MODEL_DIR: /app/models
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+      influxdb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Command API ───────────────────────────────────────────────────────────────
+  command-api:
+    build:
+      context: .
+      dockerfile: services/command-api/Dockerfile
+    container_name: smartclean-command-api
+    ports:
+      - "8000:8000"
+    environment:
+      <<: *common-env
+      COMMAND_API_PORT: "8000"
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+      influxdb:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  mosquitto_data:
+  influxdb_data:
+  grafana_data:
+
+networks:
+  default:
+    name: smartclean-network

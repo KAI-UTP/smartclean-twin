@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SmartClean Telemetry Message",
+  "type": "object",
+  "required": ["schema_version", "robot_id", "timestamp", "sequence", "pose", "sensors", "actuators", "mission"],
+  "properties": {
+    "schema_version": {"type": "string"},
+    "robot_id": {"type": "string", "maxLength": 20},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "sequence": {"type": "integer", "minimum": 0},
+    "pose": {
+      "type": "object",
+      "required": ["x_m", "y_m", "heading_deg", "speed_mps"],
+      "properties": {
+        "x_m": {"type": "number", "minimum": 0, "maximum": 100},
+        "y_m": {"type": "number", "minimum": 0, "maximum": 100},
+        "heading_deg": {"type": "number", "minimum": 0, "exclusiveMaximum": 360},
+        "speed_mps": {"type": "number", "minimum": 0, "maximum": 2}
+      }
+    },
+    "sensors": {
+      "type": "object",
+      "required": ["obstacle_cm", "battery_v", "battery_soc", "battery_a",
+                   "motor_current_a", "motor_temperature_c", "dirt_score"],
+      "properties": {
+        "obstacle_cm": {"type": "number", "minimum": 0, "maximum": 500},
+        "battery_v": {"type": "number", "minimum": 0, "maximum": 15},
+        "battery_soc": {"type": "number", "minimum": 0, "maximum": 100},
+        "battery_a": {"type": "number", "minimum": 0, "maximum": 10},
+        "motor_current_a": {"type": "number", "minimum": 0, "maximum": 10},
+        "motor_temperature_c": {"type": "number", "minimum": -10, "maximum": 120},
+        "dirt_score": {"type": "number", "minimum": 0, "maximum": 1},
+        "water_level_pct": {"type": "number", "minimum": 0, "maximum": 100},
+        "bumper_active": {"type": "boolean"}
+      }
+    },
+    "actuators": {
+      "type": "object",
+      "required": ["brush_on", "pump_on"],
+      "properties": {
+        "brush_on": {"type": "boolean"},
+        "pump_on": {"type": "boolean"}
+      }
+    },
+    "mission": {
+      "type": "object",
+      "required": ["mission_id", "mode"],
+      "properties": {
+        "mission_id": {"type": "string"},
+        "mode": {"type": "string", "enum": ["IDLE", "INSPECTING", "CLEANING", "RETURNING"]}
+      }
+    }
+  }
+}
