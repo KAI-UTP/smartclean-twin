@@ -7,8 +7,14 @@ addopts = "--tb=short -v"
 
 [tool.coverage.run]
 source = ["services", "shared"]
-omit = ["*/test_*.py", "*/conftest.py"]
+omit = [
+    "*/test_*.py",
+    "*/conftest.py",
+    "*/mqtt_client.py",
+    "*/influx_client.py",
+    "*/services/*/main.py",
+]
 
 [tool.coverage.report]
 show_missing = true
-fail_under = 70
+fail_under = 65

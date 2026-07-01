@@ -45,11 +45,12 @@ jobs:
           pip install paho-mqtt==2.1.0
           pip install fastapi==0.115.8 uvicorn==0.34.0 httpx==0.28.1
           pip install scikit-learn==1.6.1 pandas==2.2.3 numpy==2.2.2 joblib==1.4.2
+          pip install influxdb-client==1.47.0
           pip install pytest==8.3.5 pytest-cov==6.1.0
 
-      - name: Run unit tests with coverage
+      - name: Run unit + integration + regression tests with coverage
         run: |
-          pytest tests/unit/ tests/regression/ -v \
+          pytest tests/unit/ tests/integration/ tests/regression/ -v \
             --cov=shared --cov=services \
             --cov-report=xml --cov-report=term-missing \
             -p no:warnings
