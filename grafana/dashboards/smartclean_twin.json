@@ -1,5 +1,5 @@
-﻿{
-  "title": "SmartClean Twin â€” Robot Dashboard",
+{
+  "title": "SmartClean Twin - Robot Dashboard",
   "uid": "smartclean-main",
   "version": 1,
   "refresh": "5s",
@@ -111,7 +111,7 @@
     },
     {
       "id": 6,
-      "title": "Motor Temperature (Â°C)",
+      "title": "Motor Temperature (C)",
       "type": "timeseries",
       "gridPos": {"h": 6, "w": 12, "x": 0, "y": 12},
       "fieldConfig": {
@@ -137,6 +137,23 @@
       "title": "Safety State",
       "type": "stat",
       "gridPos": {"h": 6, "w": 6, "x": 12, "y": 12},
+      "options": {
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "value",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {"type": "value", "options": {"SAFE":        {"text": "SAFE",        "color": "green",  "index": 0}}},
+            {"type": "value", "options": {"WARNING":     {"text": "WARNING",     "color": "orange", "index": 1}}},
+            {"type": "value", "options": {"EMERGENCY":   {"text": "EMERGENCY",   "color": "red",    "index": 2}}},
+            {"type": "value", "options": {"UNKNOWN":     {"text": "UNKNOWN",     "color": "gray",   "index": 3}}}
+          ]
+        }
+      },
       "targets": [{
         "refId": "A",
         "datasource": {"type": "influxdb", "uid": "InfluxDB"},
@@ -148,6 +165,24 @@
       "title": "Mission State",
       "type": "stat",
       "gridPos": {"h": 6, "w": 6, "x": 18, "y": 12},
+      "options": {
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "value",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {"type": "value", "options": {"NOT_STARTED": {"text": "NOT STARTED", "color": "gray",   "index": 0}}},
+            {"type": "value", "options": {"RUNNING":     {"text": "RUNNING",     "color": "green",  "index": 1}}},
+            {"type": "value", "options": {"PAUSED":      {"text": "PAUSED",      "color": "orange", "index": 2}}},
+            {"type": "value", "options": {"COMPLETED":   {"text": "COMPLETED",   "color": "blue",   "index": 3}}},
+            {"type": "value", "options": {"ABORTED":     {"text": "ABORTED",     "color": "red",    "index": 4}}}
+          ]
+        }
+      },
       "targets": [{
         "refId": "A",
         "datasource": {"type": "influxdb", "uid": "InfluxDB"},
@@ -159,6 +194,23 @@
       "title": "AI Motor Health Prediction",
       "type": "stat",
       "gridPos": {"h": 4, "w": 8, "x": 0, "y": 18},
+      "options": {
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "value",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {"type": "value", "options": {"NORMAL":     {"text": "NORMAL",     "color": "green",  "index": 0}}},
+            {"type": "value", "options": {"HIGH_LOAD":  {"text": "HIGH LOAD",  "color": "orange", "index": 1}}},
+            {"type": "value", "options": {"OVERHEATED": {"text": "OVERHEATED", "color": "red",    "index": 2}}},
+            {"type": "value", "options": {"FAULT":      {"text": "FAULT",      "color": "dark-red","index": 3}}}
+          ]
+        }
+      },
       "targets": [{
         "refId": "A",
         "datasource": {"type": "influxdb", "uid": "InfluxDB"},
@@ -170,6 +222,22 @@
       "title": "AI Dirt Level Prediction",
       "type": "stat",
       "gridPos": {"h": 4, "w": 8, "x": 8, "y": 18},
+      "options": {
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "value",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {"type": "value", "options": {"CLEAN":    {"text": "CLEAN",    "color": "green",  "index": 0}}},
+            {"type": "value", "options": {"MODERATE": {"text": "MODERATE", "color": "orange", "index": 1}}},
+            {"type": "value", "options": {"DIRTY":    {"text": "DIRTY",    "color": "red",    "index": 2}}}
+          ]
+        }
+      },
       "targets": [{
         "refId": "A",
         "datasource": {"type": "influxdb", "uid": "InfluxDB"},
@@ -181,6 +249,13 @@
       "title": "Active Alarm Count",
       "type": "stat",
       "gridPos": {"h": 4, "w": 8, "x": 16, "y": 18},
+      "options": {
+        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "textMode": "value",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
       "fieldConfig": {
         "defaults": {
           "thresholds": {
@@ -246,4 +321,3 @@
   "schemaVersion": 36,
   "tags": ["smartclean", "digital-twin", "robot"]
 }
-
