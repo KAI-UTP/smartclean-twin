@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 import paho.mqtt.client as mqtt
 import uvicorn
 from fastapi import FastAPI
-from influxdb_client import InfluxDBClient
+from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
 from pydantic import ValidationError
 
@@ -59,20 +59,16 @@ def _get_write_api():
 def _write_prediction(robot_id: str, result: dict) -> None:
     try:
         wa = _get_write_api()
-        point = {
-            "measurement": "robot_prediction",
-            "tags": {
-                "robot_id": robot_id,
-                "model": result.get("model_used", "unknown"),
-            },
-            "fields": {
-                "motor_health": result["motor_health_prediction"],
-                "motor_health_confidence": result["motor_health_confidence"],
-                "dirt_level": result["dirt_level_prediction"],
-                "dirt_level_confidence": result["dirt_level_confidence"],
-            },
-            "time": datetime.now(timezone.utc),
-        }
+        point = (
+            Point("robot_prediction")
+            .tag("robot_id", robot_id)
+            .tag("model", result.get("model_used", "unknown"))
+            .field("motor_health", str(result["motor_health_prediction"]))
+            .field("motor_health_confidence", float(result["motor_health_confidence"]))
+            .field("dirt_level", str(result["dirt_level_prediction"]))
+            .field("dirt_level_confidence", float(result["dirt_level_confidence"]))
+            .time(datetime.now(timezone.utc))
+        )
         wa.write(bucket=INFLUXDB_BUCKET, org=INFLUXDB_ORG, record=point)
     except Exception as exc:
         logger.error("InfluxDB prediction write error: %s", exc)

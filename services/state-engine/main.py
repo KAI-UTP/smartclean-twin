@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 import paho.mqtt.client as mqtt
 import uvicorn
 from fastapi import FastAPI
-from influxdb_client import InfluxDBClient
+from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
 from pydantic import ValidationError
 
@@ -62,26 +62,21 @@ def _get_write_api():
 def _write_state(state_dict: dict) -> None:
     try:
         wa = _get_write_api()
-        fields = {
-            "motion_state": state_dict["motion_state"],
-            "operation_mode": state_dict["operation_mode"],
-            "safety_state": state_dict["safety_state"],
-            "battery_state": state_dict["battery_state"],
-            "cleaning_state": state_dict["cleaning_state"],
-            "motor_health": state_dict["motor_health"],
-            "dirt_level": state_dict["dirt_level"],
-            "mission_state": state_dict["mission_state"],
-            "connection_state": state_dict["connection_state"],
-            "twin_quality": state_dict["twin_quality"],
-            "cleaning_coverage_pct": state_dict["cleaning_coverage_pct"],
-            "alarm_count": len(state_dict["active_alarms"]),
-        }
-        point = {
-            "measurement": "robot_state",
-            "tags": {"robot_id": state_dict["robot_id"]},
-            "fields": fields,
-            "time": datetime.now(timezone.utc),
-        }
+        point = (
+            Point("robot_state")
+            .tag("robot_id", state_dict["robot_id"])
+            .field("safety_state", str(state_dict["safety_state"]))
+            .field("battery_state", str(state_dict["battery_state"]))
+            .field("mission_state", str(state_dict["mission_state"]))
+            .field("motion_state", str(state_dict["motion_state"]))
+            .field("motor_health", str(state_dict["motor_health"]))
+            .field("dirt_level", str(state_dict["dirt_level"]))
+            .field("connection_state", str(state_dict["connection_state"]))
+            .field("twin_quality", str(state_dict["twin_quality"]))
+            .field("cleaning_coverage_pct", float(state_dict["cleaning_coverage_pct"]))
+            .field("alarm_count", int(len(state_dict["active_alarms"])))
+            .time(datetime.now(timezone.utc))
+        )
         wa.write(bucket=INFLUXDB_BUCKET, org=INFLUXDB_ORG, record=point)
     except Exception as exc:
         logger.error("InfluxDB state write error: %s", exc)
