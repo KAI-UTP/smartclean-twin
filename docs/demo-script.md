@@ -297,4 +297,43 @@ Open `.github/workflows/ci.yml` and narrate the 5 jobs:
 
 ---
 
+---
+
+## Step 22 — Show NVIDIA Omniverse 3D Visualisation (2 min)
+
+Open NVIDIA Omniverse Kit / Code. In **Window > Script Editor**:
+
+**If running for the first time:**
+```python
+import omni.kit.pipapi
+omni.kit.pipapi.install("influxdb-client", module="influxdb_client")
+```
+
+**Create the 3D scene** (paste `omniverse/create_scene.py`, then call):
+```python
+create_scene()
+```
+
+**Expected:** Office room with walls, desks, 100 floor tiles and disc-shaped robot appear.
+
+**Start live feed** (paste `omniverse/live_update.py`, then call):
+```python
+start_live_update()
+```
+
+**Narrate:** "The Omniverse 3D twin reads directly from InfluxDB every second. The robot's disc moves around the room — floor tiles turn teal as it cleans. The body and status light change colour based on safety state."
+
+**Run fault demo** (paste `omniverse/fault_demo.py`, then call):
+```python
+run_fault_demo()
+```
+
+Watch: robot body flashes **red** (EMERGENCY) → pauses 5 seconds → returns to **green** (SAFE). This is the same data driving Grafana — both views update simultaneously from the same InfluxDB source.
+
+```python
+stop_live_update()
+```
+
+---
+
 **End of demonstration.**

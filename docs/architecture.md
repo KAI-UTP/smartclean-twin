@@ -119,6 +119,32 @@ SmartClean Twin is a software-emulated Digital Twin for a mobile inspection and 
 
 ---
 
+## NVIDIA Omniverse Integration
+
+The `omniverse/` directory contains two scripts run inside the Omniverse Kit Script Editor:
+
+| Script | Purpose |
+|--------|---------|
+| `omniverse/create_scene.py` | Creates the 3D scene once: 10×10m office room, 100-tile coverage grid, disc-shaped CleaningRobot |
+| `omniverse/live_update.py` | Polls InfluxDB every 1 second and drives 6 visual properties in the scene |
+| `omniverse/fault_demo.py` | Injects obstacle fault via HTTP and shows EMERGENCY flash sequence for demo |
+
+**Scene hierarchy:**
+```
+/World
+├── Room (Floor + 4 Walls + 3 Desks + CeilingLight)
+├── CoverageGrid (Tile_0_0 … Tile_9_9 — 100 tiles)
+└── CleaningRobot (Xform — position driven by InfluxDB)
+    ├── BrushDeck   (dark wide disc)
+    ├── Body        (colour = safety_state)
+    ├── StatusLight (flashes red on EMERGENCY)
+    └── BatteryBar  (scale X = battery_soc %)
+```
+
+**Omniverse reads from InfluxDB** (HTTP Flux query to `localhost:8086`) — it does not consume MQTT directly. The Docker stack must be running when `live_update.py` is active.
+
+---
+
 ## InfluxDB Measurements
 
 | Measurement | Tags | Key Fields | Written by |

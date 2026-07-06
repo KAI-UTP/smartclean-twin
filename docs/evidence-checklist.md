@@ -18,7 +18,7 @@ This checklist documents what evidence must be collected for submission.
 
 ## Visualization (5%)
 
-- [ ] Screenshot: Grafana dashboard showing all 14 panels
+- [ ] Screenshot: Grafana dashboard showing all 18 panels
 - [ ] Screenshot: Battery SOC gauge with threshold colours
 - [ ] Screenshot: Cleaning coverage at 90%+
 - [ ] Screenshot: Safety State = EMERGENCY during obstacle injection
@@ -26,6 +26,17 @@ This checklist documents what evidence must be collected for submission.
 - [ ] Screenshot: Alarm history table with real alarms
 - [ ] Screenshot: AI prediction panels showing motor health and dirt level
 - [ ] Screenshot: Grafana provisioning files (datasource + dashboard YAML)
+- [ ] Screenshot: 4 aggregation panels (mean motor current 30s, max motor temp 30s, mean battery SoC 1m, alarm count/min)
+
+---
+
+## NVIDIA Omniverse (Bonus)
+
+- [ ] Screenshot: Omniverse 3D scene with office room, coverage grid tiles, and CleaningRobot disc visible
+- [ ] Screenshot: Robot body colour = green (SAFE state)
+- [ ] Screenshot: Robot body colour = red (EMERGENCY state during obstacle fault injection)
+- [ ] Screenshot: Coverage tiles lighting up teal as robot cleans
+- [ ] Screenshot: Battery bar shrinking / colour change as battery drains
 
 ---
 

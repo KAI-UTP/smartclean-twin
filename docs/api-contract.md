@@ -46,7 +46,7 @@ This document specifies the complete interface contract between every pair of mi
 | **Protocol** | MQTT 3.1.1 |
 | **Broker host** | `mosquitto` (Docker DNS) |
 | **Port** | `1883` |
-| **Topic** | `smartclean/telemetry/raw` |
+| **Topic** | `smartclean/SCR01/telemetry/raw` |
 | **QoS** | 1 (at-least-once) |
 | **Direction** | Simulator **publishes**, broker forwards |
 | **Frequency** | Every 1 second |
@@ -94,7 +94,7 @@ This document specifies the complete interface contract between every pair of mi
 |----------|-------|
 | **Protocol** | MQTT 3.1.1 |
 | **Port** | `1883` |
-| **Topic subscribed** | `smartclean/telemetry/raw` |
+| **Topic subscribed** | `smartclean/SCR01/telemetry/raw` |
 | **QoS** | 1 |
 | **Direction** | Ingestion **subscribes** |
 | **Client ID** | `telemetry-ingestion` |
@@ -111,7 +111,7 @@ Ingestion validates the message against the `TelemetryMessage` Pydantic model. I
 |----------|-------|
 | **Protocol** | MQTT 3.1.1 |
 | **Port** | `1883` |
-| **Topic** | `smartclean/telemetry/validated` |
+| **Topic** | `smartclean/SCR01/telemetry/validated` |
 | **QoS** | 1 |
 | **Direction** | Ingestion **publishes** |
 | **Frequency** | Once per valid raw message (~1 Hz) |
@@ -150,7 +150,7 @@ robot_telemetry,robot_id=SCR01 battery_soc=87.3,battery_v=24.1,battery_a=2.1,
 |----------|-------|
 | **Protocol** | MQTT 3.1.1 |
 | **Port** | `1883` |
-| **Topic subscribed** | `smartclean/telemetry/validated` |
+| **Topic subscribed** | `smartclean/SCR01/telemetry/validated` |
 | **QoS** | 1 |
 | **Client ID** | `state-engine` |
 | **Initiated** | On State Engine startup |
@@ -166,8 +166,8 @@ State engine applies rule-based logic (`rules.py`) to compute 11 state variables
 |----------|-------|
 | **Protocol** | MQTT 3.1.1 |
 | **Port** | `1883` |
-| **Topic (state)** | `smartclean/state` |
-| **Topic (alerts)** | `smartclean/alerts` |
+| **Topic (state)** | `smartclean/SCR01/state` |
+| **Topic (alerts)** | `smartclean/SCR01/alert` |
 | **QoS** | 1 |
 | **Frequency** | Once per validated telemetry message |
 | **Initiated** | After `rules.evaluate()` returns |
@@ -237,7 +237,7 @@ State engine applies rule-based logic (`rules.py`) to compute 11 state variables
 |----------|-------|
 | **Protocol** | MQTT 3.1.1 |
 | **Port** | `1883` |
-| **Topic subscribed** | `smartclean/telemetry/validated` |
+| **Topic subscribed** | `smartclean/SCR01/telemetry/validated` |
 | **QoS** | 1 |
 | **Client ID** | `ai-service` |
 
@@ -251,7 +251,7 @@ AI service extracts 7 features (motor_current_a, motor_temperature_c, speed_mps,
 |----------|-------|
 | **Protocol** | MQTT 3.1.1 |
 | **Port** | `1883` |
-| **Topic** | `smartclean/predictions` |
+| **Topic** | `smartclean/SCR01/prediction` |
 | **QoS** | 1 |
 
 **Prediction Message Format (JSON):**
@@ -319,8 +319,8 @@ AI service extracts 7 features (motor_current_a, motor_temperature_c, speed_mps,
 |----------|-------|
 | **Protocol** | MQTT 3.1.1 |
 | **Port** | `1883` |
-| **Topic (command)** | `smartclean/commands` |
-| **Topic (ACK)** | `smartclean/acks` |
+| **Topic (command)** | `smartclean/SCR01/command/motion` or `smartclean/SCR01/command/cleaning` |
+| **Topic (ACK)** | `smartclean/SCR01/ack` |
 | **QoS** | 1 |
 | **Timeout** | 5 seconds (Command API waits for ACK) |
 | **Initiated** | Command API receives HTTP POST |
@@ -376,6 +376,34 @@ Each microservice exposes a REST health endpoint:
 | Mosquitto | 1883 | TCP connect | (MQTT protocol) |
 | InfluxDB | 8086 | `GET /health` | `{"status": "pass"}` |
 | Grafana | 3000 | `GET /api/health` | `{"database": "ok"}` |
+
+---
+
+## 16. Omniverse Live Update → InfluxDB (3D Visualisation)
+
+| Property | Value |
+|----------|-------|
+| **Protocol** | HTTP/1.1 |
+| **Host** | `localhost` |
+| **Port** | `8086` |
+| **Route** | `POST /api/v2/query?org=smartclean` |
+| **Content-Type** | `application/vnd.flux` |
+| **Auth** | `Authorization: Token smartclean-super-secret-token` |
+| **Frequency** | Every 1 second (polling from Omniverse Script Editor) |
+| **Measurements read** | `robot_telemetry` (x_m, y_m, heading_deg, battery_soc), `robot_state` (safety_state, cleaning_coverage_pct) |
+| **Initiated** | `start_live_update()` called in Omniverse Script Editor |
+| **Concluded** | `stop_live_update()` called |
+
+**What drives the 3D scene (omniverse/live_update.py):**
+
+| USD Prim | Property updated | Source field |
+|----------|-----------------|--------------|
+| `/World/CleaningRobot` | Translate X, Y | `robot_telemetry.x_m`, `y_m` |
+| `/World/CleaningRobot` | Rotate Z | `robot_telemetry.heading_deg` |
+| `/World/CleaningRobot/Body` | Display colour | `robot_state.safety_state` (green/orange/red) |
+| `/World/CleaningRobot/StatusLight` | Display colour + flash | `robot_state.safety_state` (flashes on EMERGENCY) |
+| `/World/CleaningRobot/BatteryBar` | Scale X + colour | `robot_telemetry.battery_soc` |
+| `/World/CoverageGrid/Tile_X_Y` | Display colour | Robot position (turns teal when visited) |
 
 ---
 

@@ -86,6 +86,7 @@ AI predictions flow into Grafana, data persists after InfluxDB restart, CI pipel
 | T-25 | Write smoke test and demo data scripts | Chan Li Kai | Done |
 | T-26 | Write all documentation (architecture, sprint plan, demo script) | Chan Li Kai | Done |
 | T-27 | Review Grafana panels and dashboard requirements | Liang Yan Ee | Assigned |
+| T-31 | NVIDIA Omniverse 3D scene (create_scene.py + live_update.py + fault_demo.py) | Chan Li Kai | Done |
 | T-28 | Review command flow and ack latency | Liang Yan Ee | Assigned |
 | T-29 | Organize sprint evidence and meeting records | Nurin Emelin | Assigned |
 | T-30 | Final demonstration preparation | All | Assigned |
@@ -163,6 +164,8 @@ AI predictions flow into Grafana, data persists after InfluxDB restart, CI pipel
 - AI service trained RandomForest classifiers achieving ≥80% accuracy (motor health, dirt level) ✅
 - AI predictions visible in Grafana (panels 9 and 10) ✅
 - 18-panel Grafana dashboard with time-series, stat, table, and aggregation panels ✅
+- NVIDIA Omniverse 3D office scene: room + 100-tile coverage grid + disc CleaningRobot ✅
+- Omniverse live update: robot position, heading, safety-state colour, battery bar, coverage tiles — all driven live from InfluxDB at 1s interval ✅
 - 4 aggregation panels added using `aggregateWindow()` (mean motor current 30s, max motor temp 30s, mean battery SoC 1m, alarm count/min) ✅
 - InfluxDB persistence confirmed: data survives container restart via named Docker volume ✅
 - `docker compose up --scale telemetry-ingestion=2` tested — dual ingestion instances run without MQTT conflict ✅
@@ -173,7 +176,7 @@ AI predictions flow into Grafana, data persists after InfluxDB restart, CI pipel
 - Nurin Emelin compiled sprint evidence and coordinated meeting records ✅
 
 **What was not completed:**
-- NVIDIA Omniverse 3D visualisation (planned as enhancement, scope de-prioritised vs. core system stability)
+- Nothing — all planned tasks completed including Omniverse integration (T-31)
 
 **Demo performed:** Yes — full 20-minute demonstration of all 18 Grafana panels, fault injection, and CI pipeline  
 **Stakeholder feedback:**
