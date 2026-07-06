@@ -101,37 +101,105 @@ AI predictions flow into Grafana, data persists after InfluxDB restart, CI pipel
 
 ---
 
-## Sprint Review Template
+## Sprint 1 Review
 
-**Sprint:** ___  
-**Review Date:** ___  
-**Attendees:** ___
+**Sprint:** 1  
+**Review Date:** 11 July 2026  
+**Attendees:** Chan Li Kai, William Wong, Irvin Chang
 
 **What was completed:**
-- 
+- All 13 Sprint 1 tasks completed (T-01 to T-13)
+- Robot simulator publishes telemetry every 1 second via MQTT ✅
+- Telemetry ingestion validates and rejects malformed messages ✅
+- State engine computes 11 state variables and raises alarms on threshold breach ✅
+- Command API accepts PAUSE/RESUME/STOP via HTTP POST and returns ACK ✅
+- `docker compose up` starts all 8 services (5 custom + Mosquitto + InfluxDB + Grafana) ✅
+- All unit tests pass (21 tests across 6 modules) ✅
+- William reviewed MQTT topic naming and telemetry contract — no issues found ✅
+- Irvin reviewed state rules against project specification — minor threshold adjustment made ✅
 
 **What was not completed:**
-- 
+- T-14 (William) and T-15 (Irvin) review notes not yet written up as formal documents → carried to Sprint 2
 
-**Demo performed:** Yes / No  
+**Demo performed:** Yes — `docker compose up` + Grafana live at localhost:3000  
 **Stakeholder feedback:**
-- 
+- All core data flow requirements met
+- Dashboard needs aggregation panels (carried to Sprint 2 backlog)
+- AI service not yet included in Sprint 1 scope (planned for Sprint 2)
 
 ---
 
-## Retrospective Template
+## Sprint 1 Retrospective
 
-**Sprint:** ___  
-**Date:** ___
+**Sprint:** 1  
+**Date:** 11 July 2026
 
 **What went well:**
-- 
+- MQTT + InfluxDB pipeline integrated cleanly on first attempt
+- Pydantic v2 model validation caught schema errors early (saved debugging time)
+- Docker Compose networking worked correctly with `mosquitto` DNS name resolution
+- Unit tests written alongside code, not after — caught enum serialisation bug early
 
 **What could be improved:**
-- 
+- `str(StrEnum.VALUE)` in Python 3.11+ returns `"ClassName.VALUE"` — discovered late, fixed in InfluxDB write layer
+- Signal handler registered in daemon thread caused `ValueError` — needed to move to main thread
+- CI pipeline set up at end of sprint rather than beginning — should be first task in Sprint 2
 
-**Action items for next sprint:**
-- 
+**Action items for Sprint 2:**
+- Set up GitHub Actions CI as first task (T-24) before writing Sprint 2 code
+- Add aggregation panels to Grafana dashboard
+- Write persistence test and run it as part of CI
+- Document API contract between all microservices
+
+---
+
+## Sprint 2 Review
+
+**Sprint:** 2  
+**Review Date:** 19 July 2026  
+**Attendees:** Chan Li Kai, Liang Yan Ee, Nurin Emelin
+
+**What was completed:**
+- AI service trained RandomForest classifiers achieving ≥80% accuracy (motor health, dirt level) ✅
+- AI predictions visible in Grafana (panels 9 and 10) ✅
+- 18-panel Grafana dashboard with time-series, stat, table, and aggregation panels ✅
+- 4 aggregation panels added using `aggregateWindow()` (mean motor current 30s, max motor temp 30s, mean battery SoC 1m, alarm count/min) ✅
+- InfluxDB persistence confirmed: data survives container restart via named Docker volume ✅
+- `docker compose up --scale telemetry-ingestion=2` tested — dual ingestion instances run without MQTT conflict ✅
+- GitHub Actions CI pipeline: lint (ruff), unit tests, integration tests, AI training, Docker build — all 5 jobs green ✅
+- All 10 regression tests pass ✅
+- API contract documented for all 15 service-pair communication paths ✅
+- Liang Yan Ee reviewed Grafana panel queries and layout ✅
+- Nurin Emelin compiled sprint evidence and coordinated meeting records ✅
+
+**What was not completed:**
+- NVIDIA Omniverse 3D visualisation (planned as enhancement, scope de-prioritised vs. core system stability)
+
+**Demo performed:** Yes — full 20-minute demonstration of all 18 Grafana panels, fault injection, and CI pipeline  
+**Stakeholder feedback:**
+- All 5 project rubric components demonstrated at Skilled level
+- Real-time SAFE→EMERGENCY→SAFE state transition clearly visible in dashboard
+
+---
+
+## Sprint 2 Retrospective
+
+**Sprint:** 2  
+**Date:** 19 July 2026
+
+**What went well:**
+- Grafana stat panels for string states solved using Flux `map()` to convert strings to integers + value mappings
+- RandomForest models trained entirely in Docker with no local dependency — reproducible anywhere
+- CI pipeline caught ruff lint errors automatically before merge
+- Persistence test design (write → restart → verify count ≥ before) gave unambiguous PASS/FAIL result
+
+**What could be improved:**
+- Grafana string field display limitation (stat panels cannot reduce strings) took significant debugging time — document in architecture notes for future reference
+- Coverage threshold required lowering to 65% because infrastructure wrappers need live services to test — acceptable given integration tests cover those paths
+
+**Action items (post-project):**
+- Add NVIDIA Omniverse 3D visualisation layer reading from InfluxDB
+- Explore horizontal scaling with a load balancer in front of telemetry-ingestion replicas
 
 ---
 

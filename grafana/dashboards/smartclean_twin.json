@@ -318,6 +318,107 @@
       }]
     },
     {
+      "id": 15,
+      "title": "Mean Motor Current — 30s Window (A)",
+      "type": "timeseries",
+      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 36},
+      "description": "30-second mean aggregation of motor current. Each point represents the average of ~30 raw 1s samples, smoothing noise while showing trend. Aggregation window justified: data arrives every 1s, so 30s aggregates ~30 points per bucket.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "amp",
+          "custom": {"lineWidth": 2},
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "orange", "value": 1.5},
+              {"color": "red", "value": 2.5}
+            ]
+          }
+        }
+      },
+      "targets": [{
+        "refId": "A",
+        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
+        "query": "from(bucket: \"smartclean_twin\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"motor_current_a\") |> aggregateWindow(every: 30s, fn: mean, createEmpty: false) |> yield(name: \"mean_motor_current_30s\")"
+      }]
+    },
+    {
+      "id": 16,
+      "title": "Max Motor Temperature — 30s Window (C)",
+      "type": "timeseries",
+      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 36},
+      "description": "30-second maximum aggregation of motor temperature. Shows the worst-case temperature in each window, useful for detecting overheating trends that a mean would understate.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "celsius",
+          "custom": {"lineWidth": 2},
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "orange", "value": 55},
+              {"color": "red", "value": 70}
+            ]
+          }
+        }
+      },
+      "targets": [{
+        "refId": "A",
+        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
+        "query": "from(bucket: \"smartclean_twin\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"motor_temperature_c\") |> aggregateWindow(every: 30s, fn: max, createEmpty: false) |> yield(name: \"max_motor_temp_30s\")"
+      }]
+    },
+    {
+      "id": 17,
+      "title": "Mean Battery SoC — 1m Window (%)",
+      "type": "timeseries",
+      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 42},
+      "description": "1-minute mean aggregation of battery state of charge. Smooths short-term fluctuations to show the battery discharge trend clearly over time.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0, "max": 100,
+          "custom": {"lineWidth": 2},
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": 0},
+              {"color": "orange", "value": 20},
+              {"color": "green", "value": 50}
+            ]
+          }
+        }
+      },
+      "targets": [{
+        "refId": "A",
+        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
+        "query": "from(bucket: \"smartclean_twin\") |> range(start: -30m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"battery_soc\") |> aggregateWindow(every: 1m, fn: mean, createEmpty: false) |> yield(name: \"mean_battery_soc_1m\")"
+      }]
+    },
+    {
+      "id": 18,
+      "title": "Alarm Count per Minute",
+      "type": "timeseries",
+      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 42},
+      "description": "Count of alarm events aggregated per 1-minute window. Spikes indicate periods of sustained fault conditions. Uses count() reduction to convert alarm records into a frequency metric.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {"lineWidth": 2, "fillOpacity": 20},
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "orange", "value": 3},
+              {"color": "red", "value": 10}
+            ]
+          }
+        }
+      },
+      "targets": [{
+        "refId": "A",
+        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
+        "query": "from(bucket: \"smartclean_twin\") |> range(start: -1h) |> filter(fn: (r) => r._measurement == \"robot_alarm\") |> filter(fn: (r) => r._field == \"description\") |> aggregateWindow(every: 1m, fn: count, createEmpty: false) |> yield(name: \"alarm_count_per_min\")"
+      }]
+    },
+    {
       "id": 14,
       "title": "Alarm History",
       "type": "table",
