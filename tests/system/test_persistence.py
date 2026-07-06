@@ -64,7 +64,9 @@ def _influxdb_healthy() -> bool:
 def require_docker():
     result = subprocess.run(
         ["docker", "ps", "--filter", "name=smartclean-influxdb", "--format", "{{.Names}}"],
-        capture_output=True, text=True, timeout=10,
+        capture_output=True,
+        text=True,
+        timeout=10,
     )
     if "smartclean-influxdb" not in result.stdout:
         pytest.skip("Docker stack not running — start with 'docker compose up -d' first")
@@ -94,7 +96,9 @@ def test_data_persists_after_influxdb_restart(require_docker):
     # Restart InfluxDB container
     result = subprocess.run(
         ["docker", "restart", "smartclean-influxdb"],
-        capture_output=True, text=True, timeout=30,
+        capture_output=True,
+        text=True,
+        timeout=30,
     )
     assert result.returncode == 0, f"docker restart failed: {result.stderr}"
     print("[RESTART] InfluxDB container restarted")
@@ -143,9 +147,7 @@ def test_state_data_persists_after_influxdb_restart(require_docker):
     count_after = _query_count("robot_state", minutes=60)
     print(f"[AFTER] robot_state count: {count_after}")
 
-    assert count_after >= count_before, (
-        f"robot_state data loss: {count_before} → {count_after}"
-    )
+    assert count_after >= count_before, f"robot_state data loss: {count_before} → {count_after}"
     print(f"[PASS] robot_state persisted: {count_after} rows")
 
 
@@ -168,7 +170,7 @@ def test_prediction_data_persists_after_influxdb_restart(require_docker):
     count_after = _query_count("robot_prediction", minutes=60)
     print(f"[AFTER] robot_prediction count: {count_after}")
 
-    assert count_after >= count_before, (
-        f"robot_prediction data loss: {count_before} → {count_after}"
-    )
+    assert (
+        count_after >= count_before
+    ), f"robot_prediction data loss: {count_before} → {count_after}"
     print(f"[PASS] robot_prediction persisted: {count_after} rows")
