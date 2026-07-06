@@ -39,9 +39,11 @@ from pxr import Gf, Sdf, UsdGeom, Vt
 # ---------------------------------------------------------------------------
 # Scene constants
 # ---------------------------------------------------------------------------
-ROOM_SIZE_M = 10.0
+CELL_SIZE_M = 0.5  # matches grid_map.CELL_SIZE_M
+GRID_CELLS = 10
+ROOM_SIZE_M = GRID_CELLS * CELL_SIZE_M  # 5.0 m x 5.0 m
 WALL_HEIGHT_M = 3.0
-WALL_THICKNESS = 0.2
+WALL_THICKNESS = 0.1
 TILE_COUNT = 10
 
 ROBOT_BODY_RADIUS = 0.25
@@ -105,56 +107,92 @@ def _create_room(stage):
 
     _xform(stage, "/World/Room")
 
-    _cube(stage, "/World/Room/Floor",
-          translate=(half, half, -0.05),
-          scale=(ROOM_SIZE_M, ROOM_SIZE_M, 0.10),
-          color=COL_FLOOR)
+    _cube(
+        stage,
+        "/World/Room/Floor",
+        translate=(half, half, -0.05),
+        scale=(ROOM_SIZE_M, ROOM_SIZE_M, 0.10),
+        color=COL_FLOOR,
+    )
 
-    _cube(stage, "/World/Room/WallNorth",
-          translate=(half, ROOM_SIZE_M, WALL_HEIGHT_M / 2),
-          scale=(ROOM_SIZE_M, WALL_THICKNESS, WALL_HEIGHT_M),
-          color=COL_WALL)
-    _cube(stage, "/World/Room/WallSouth",
-          translate=(half, 0.0, WALL_HEIGHT_M / 2),
-          scale=(ROOM_SIZE_M, WALL_THICKNESS, WALL_HEIGHT_M),
-          color=COL_WALL)
-    _cube(stage, "/World/Room/WallEast",
-          translate=(ROOM_SIZE_M, half, WALL_HEIGHT_M / 2),
-          scale=(WALL_THICKNESS, ROOM_SIZE_M, WALL_HEIGHT_M),
-          color=COL_WALL)
-    _cube(stage, "/World/Room/WallWest",
-          translate=(0.0, half, WALL_HEIGHT_M / 2),
-          scale=(WALL_THICKNESS, ROOM_SIZE_M, WALL_HEIGHT_M),
-          color=COL_WALL)
+    _cube(
+        stage,
+        "/World/Room/WallNorth",
+        translate=(half, ROOM_SIZE_M, WALL_HEIGHT_M / 2),
+        scale=(ROOM_SIZE_M, WALL_THICKNESS, WALL_HEIGHT_M),
+        color=COL_WALL,
+    )
+    _cube(
+        stage,
+        "/World/Room/WallSouth",
+        translate=(half, 0.0, WALL_HEIGHT_M / 2),
+        scale=(ROOM_SIZE_M, WALL_THICKNESS, WALL_HEIGHT_M),
+        color=COL_WALL,
+    )
+    _cube(
+        stage,
+        "/World/Room/WallEast",
+        translate=(ROOM_SIZE_M, half, WALL_HEIGHT_M / 2),
+        scale=(WALL_THICKNESS, ROOM_SIZE_M, WALL_HEIGHT_M),
+        color=COL_WALL,
+    )
+    _cube(
+        stage,
+        "/World/Room/WallWest",
+        translate=(0.0, half, WALL_HEIGHT_M / 2),
+        scale=(WALL_THICKNESS, ROOM_SIZE_M, WALL_HEIGHT_M),
+        color=COL_WALL,
+    )
 
-    # Desk obstacles — positions match hard-blocked cells in simulator grid_map.py
-    _cube(stage, "/World/Room/Desk01",
-          translate=(2.0, 2.0, 0.50),
-          scale=(1.4, 0.7, 1.0), color=COL_DESK)
-    _cube(stage, "/World/Room/Desk02",
-          translate=(7.5, 8.0, 0.50),
-          scale=(1.4, 0.7, 1.0), color=COL_DESK)
-    _cube(stage, "/World/Room/Desk03",
-          translate=(5.0, 5.0, 0.40),
-          scale=(0.8, 0.8, 0.8), color=COL_DESK)
+    # Desk obstacles — x_m = col*0.5, y_m = row*0.5 from grid_map layout
+    # Obstacle cells: col=4 rows 2-3 (x=2.0 y=1.0-1.5), col=6 rows 4-5 (x=3.0 y=2.0-2.5), col=3 row 7 (x=1.5 y=3.5)
+    _cube(
+        stage,
+        "/World/Room/Desk01",
+        translate=(2.0, 1.25, 0.40),
+        scale=(0.4, 1.1, 0.8),
+        color=COL_DESK,
+    )
+    _cube(
+        stage,
+        "/World/Room/Desk02",
+        translate=(3.0, 2.25, 0.40),
+        scale=(0.4, 1.1, 0.8),
+        color=COL_DESK,
+    )
+    _cube(
+        stage,
+        "/World/Room/Desk03",
+        translate=(1.5, 3.5, 0.40),
+        scale=(0.4, 0.4, 0.8),
+        color=COL_DESK,
+    )
 
-    _sphere(stage, "/World/Room/CeilingLight",
-            translate=(half, half, WALL_HEIGHT_M - 0.15),
-            radius=0.25, color=COL_CEILING_LIGHT)
+    _sphere(
+        stage,
+        "/World/Room/CeilingLight",
+        translate=(half, half, WALL_HEIGHT_M - 0.15),
+        radius=0.25,
+        color=COL_CEILING_LIGHT,
+    )
 
     print("[OK] Room: floor + 4 walls + 3 desk obstacles + ceiling light")
 
 
 def _create_coverage_grid(stage):
     _xform(stage, "/World/CoverageGrid")
-    for x in range(TILE_COUNT):
-        for y in range(TILE_COUNT):
-            _cube(stage,
-                  f"/World/CoverageGrid/Tile_{x}_{y}",
-                  translate=(x + 0.5, y + 0.5, 0.001),
-                  scale=(0.92, 0.92, 0.002),
-                  color=COL_TILE_UNCLEANED)
-    print(f"[OK] Coverage grid: {TILE_COUNT * TILE_COUNT} tiles (Tile_0_0 … Tile_9_9)")
+    for col in range(TILE_COUNT):
+        for row in range(TILE_COUNT):
+            cx = col * CELL_SIZE_M + CELL_SIZE_M / 2
+            cy = row * CELL_SIZE_M + CELL_SIZE_M / 2
+            _cube(
+                stage,
+                f"/World/CoverageGrid/Tile_{col}_{row}",
+                translate=(cx, cy, 0.001),
+                scale=(CELL_SIZE_M * 0.90, CELL_SIZE_M * 0.90, 0.002),
+                color=COL_TILE_UNCLEANED,
+            )
+    print(f"[OK] Coverage grid: {TILE_COUNT * TILE_COUNT} tiles (Tile_0_0 ... Tile_9_9)")
 
 
 def _create_cleaning_robot(stage):
@@ -168,30 +206,42 @@ def _create_cleaning_robot(stage):
     z_top = ROBOT_BRUSH_HEIGHT + ROBOT_BODY_HEIGHT
 
     # Brush deck — slightly wider, very dark disc at the bottom
-    _cylinder(stage, "/World/CleaningRobot/BrushDeck",
-              translate=(0.0, 0.0, z_brush),
-              radius=ROBOT_BRUSH_RADIUS,
-              height=ROBOT_BRUSH_HEIGHT,
-              color=COL_ROBOT_BRUSH)
+    _cylinder(
+        stage,
+        "/World/CleaningRobot/BrushDeck",
+        translate=(0.0, 0.0, z_brush),
+        radius=ROBOT_BRUSH_RADIUS,
+        height=ROBOT_BRUSH_HEIGHT,
+        color=COL_ROBOT_BRUSH,
+    )
 
     # Main body — colour changes with safety state (green / orange / red)
-    _cylinder(stage, "/World/CleaningRobot/Body",
-              translate=(0.0, 0.0, z_body),
-              radius=ROBOT_BODY_RADIUS,
-              height=ROBOT_BODY_HEIGHT,
-              color=COL_ROBOT_SAFE)
+    _cylinder(
+        stage,
+        "/World/CleaningRobot/Body",
+        translate=(0.0, 0.0, z_body),
+        radius=ROBOT_BODY_RADIUS,
+        height=ROBOT_BODY_HEIGHT,
+        color=COL_ROBOT_SAFE,
+    )
 
     # Status light — small sphere on top, flashes on EMERGENCY
-    _sphere(stage, "/World/CleaningRobot/StatusLight",
-            translate=(0.0, 0.0, z_top + 0.07),
-            radius=0.06,
-            color=COL_STATUS_LIGHT_SAFE)
+    _sphere(
+        stage,
+        "/World/CleaningRobot/StatusLight",
+        translate=(0.0, 0.0, z_top + 0.07),
+        radius=0.06,
+        color=COL_STATUS_LIGHT_SAFE,
+    )
 
     # Battery bar — thin flat cube; live_update.py scales X by battery SoC
-    _cube(stage, "/World/CleaningRobot/BatteryBar",
-          translate=(0.0, 0.0, z_top + 0.03),
-          scale=(0.40, 0.06, 0.03),
-          color=COL_BATTERY)
+    _cube(
+        stage,
+        "/World/CleaningRobot/BatteryBar",
+        translate=(0.0, 0.0, z_top + 0.03),
+        scale=(0.40, 0.06, 0.03),
+        color=COL_BATTERY,
+    )
 
     print("[OK] CleaningRobot: BrushDeck + Body + StatusLight + BatteryBar")
 

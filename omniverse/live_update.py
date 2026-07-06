@@ -61,18 +61,20 @@ BATTERY_PATH = "/World/CleaningRobot/BatteryBar"
 
 UPDATE_INTERVAL_S = 1.0
 TILE_COUNT = 10
+CELL_SIZE_M = 0.5  # matches grid_map.CELL_SIZE_M
 
 # Safety state colour map
 _SAFETY_COLOR = {
-    "SAFE":      Gf.Vec3f(0.20, 0.78, 0.30),
-    "WARNING":   Gf.Vec3f(1.00, 0.55, 0.05),
+    "SAFE": Gf.Vec3f(0.20, 0.78, 0.30),
+    "WARNING": Gf.Vec3f(1.00, 0.55, 0.05),
     "EMERGENCY": Gf.Vec3f(0.90, 0.10, 0.10),
 }
-_EMERGENCY_DIM = Gf.Vec3f(0.35, 0.04, 0.04)   # dark-red for flash "off" frame
+_EMERGENCY_DIM = Gf.Vec3f(0.35, 0.04, 0.04)  # dark-red for flash "off" frame
 
 COL_TILE_CLEANED = Gf.Vec3f(0.40, 0.85, 0.72)
-COL_BATTERY_OK   = Gf.Vec3f(0.20, 0.78, 0.30)
-COL_BATTERY_LOW  = Gf.Vec3f(1.00, 0.55, 0.05)
+COL_TILE_UNCLEANED = Gf.Vec3f(0.82, 0.78, 0.72)
+COL_BATTERY_OK = Gf.Vec3f(0.20, 0.78, 0.30)
+COL_BATTERY_LOW = Gf.Vec3f(1.00, 0.55, 0.05)
 COL_BATTERY_CRIT = Gf.Vec3f(0.90, 0.10, 0.10)
 
 # ---------------------------------------------------------------------------
@@ -87,12 +89,12 @@ def _query_latest(measurement, fields):
     flt = " or ".join(f'r._field == "{f}"' for f in fields)
     flux = (
         f'from(bucket: "{INFLUX_BUCKET}")'
-        f' |> range(start: -15s)'
+        f" |> range(start: -15s)"
         f' |> filter(fn: (r) => r._measurement == "{measurement}")'
-        f' |> filter(fn: (r) => {flt})'
-        f' |> last()'
+        f" |> filter(fn: (r) => {flt})"
+        f" |> last()"
         f' |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")'
-        f' |> limit(n: 1)'
+        f" |> limit(n: 1)"
     )
     tables = _query_api.query(flux)
     for table in tables:
@@ -126,8 +128,8 @@ def _set_scale_x(stage, path, sx):
 # ---------------------------------------------------------------------------
 class SmartCleanTwinUpdater:
     def __init__(self):
-        self._visited = set()   # grid cells (tx, ty) the robot has cleaned
-        self._flash = False     # toggles each tick during EMERGENCY
+        self._visited = set()  # grid cells (tx, ty) the robot has cleaned
+        self._flash = False  # toggles each tick during EMERGENCY
 
     # ------------------------------------------------------------------
     def _apply_pose(self, stage, tel):
@@ -147,12 +149,21 @@ class SmartCleanTwinUpdater:
             UsdGeom.XformCommonAPI.RotationOrderXYZ,
         )
 
-        # Light up the tile the robot is currently on
-        tx, ty = int(float(x)), int(float(y))
+        # Light up the tile the robot is currently on (x_m / 0.5 = col index)
+        tx = int(float(x) / CELL_SIZE_M)
+        ty = int(float(y) / CELL_SIZE_M)
         if 0 <= tx < TILE_COUNT and 0 <= ty < TILE_COUNT:
             if (tx, ty) not in self._visited:
                 self._visited.add((tx, ty))
                 _set_color(stage, f"/World/CoverageGrid/Tile_{tx}_{ty}", COL_TILE_CLEANED)
+
+        # Detect new cleaning loop: robot returns to home cell after cleaning many tiles
+        if tx == 1 and ty == 1 and len(self._visited) > 20:
+            self._visited.clear()
+            for c in range(TILE_COUNT):
+                for r in range(TILE_COUNT):
+                    _set_color(stage, f"/World/CoverageGrid/Tile_{c}_{r}", COL_TILE_UNCLEANED)
+            print("[INFO] New cleaning loop started -- coverage grid reset")
 
     # ------------------------------------------------------------------
     def _apply_safety(self, stage, state):
@@ -188,10 +199,10 @@ class SmartCleanTwinUpdater:
             print("[ERROR] No active USD stage.")
             return
 
-        tel = _query_latest("robot_telemetry",
-                            ["x_m", "y_m", "heading_deg", "battery_soc"])
-        state = _query_latest("robot_state",
-                              ["safety_state", "mission_state", "cleaning_coverage_pct"])
+        tel = _query_latest("robot_telemetry", ["x_m", "y_m", "heading_deg", "battery_soc"])
+        state = _query_latest(
+            "robot_state", ["safety_state", "mission_state", "cleaning_coverage_pct"]
+        )
 
         if not tel and not state:
             print("[WARN] No data — is 'docker compose up -d' running?")

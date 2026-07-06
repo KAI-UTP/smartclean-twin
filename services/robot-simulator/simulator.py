@@ -152,11 +152,11 @@ class RobotSimulator:
                 s.mode = "RETURNING"
                 return
 
-            # Normal lawnmower navigation
+            # Normal lawnmower navigation — loop continuously
             if s.path_index >= len(self._path):
-                s.stopped = True
-                s.mode = "IDLE"
-                s.speed_mps = 0.0
+                s.path_index = 0
+                self._cleaned.clear()
+                self._dirt_map = gm.generate_dirt_map(SEED)
                 return
 
             target_row, target_col = self._path[s.path_index]
