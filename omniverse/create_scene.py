@@ -34,7 +34,7 @@ Improvements over HW3 omniverse_create_scene.py
 """
 
 import omni.usd
-from pxr import Gf, Sdf, Usd, UsdGeom, Vt
+from pxr import Gf, Sdf, UsdGeom, Vt
 
 # ---------------------------------------------------------------------------
 # Scene constants
