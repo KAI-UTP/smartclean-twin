@@ -243,12 +243,32 @@ def _create_cleaning_robot(stage):
         color=COL_BATTERY,
     )
 
-    print("[OK] CleaningRobot: BrushDeck + Body + StatusLight + BatteryBar")
+    # Direction arrow — cone pointing forward (+X in robot-local space)
+    # Rotates automatically with the robot since it is a child prim
+    arrow = UsdGeom.Cone.Define(stage, Sdf.Path("/World/CleaningRobot/DirectionArrow"))
+    arrow.CreateRadiusAttr(0.06)
+    arrow.CreateHeightAttr(0.18)
+    arrow.CreateAxisAttr("X")
+    UsdGeom.XformCommonAPI(arrow).SetTranslate(Gf.Vec3d(ROBOT_BODY_RADIUS + 0.1, 0.0, z_body))
+    arrow.CreateDisplayColorAttr(Vt.Vec3fArray([Gf.Vec3f(0.10, 0.90, 0.10)]))
+
+    print("[OK] CleaningRobot: BrushDeck + Body + StatusLight + BatteryBar + DirectionArrow")
 
 
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
+def _create_obstacle_indicator(stage):
+    # Red cube that live_update.py makes visible during EMERGENCY state.
+    # Parked underground (z = -5) when not active so it is invisible.
+    prim = UsdGeom.Cube.Define(stage, Sdf.Path("/World/ObstacleIndicator"))
+    prim.CreateSizeAttr(1.0)
+    UsdGeom.XformCommonAPI(prim).SetTranslate(Gf.Vec3d(0.0, 0.0, -5.0))
+    UsdGeom.XformCommonAPI(prim).SetScale(Gf.Vec3f(0.25, 0.25, 0.40))
+    prim.CreateDisplayColorAttr(Vt.Vec3fArray([Gf.Vec3f(0.95, 0.10, 0.10)]))
+    print("[OK] ObstacleIndicator created (hidden underground)")
+
+
 def create_scene():
     context = omni.usd.get_context()
     stage = context.get_stage()
@@ -262,6 +282,7 @@ def create_scene():
     _create_room(stage)
     _create_coverage_grid(stage)
     _create_cleaning_robot(stage)
+    _create_obstacle_indicator(stage)
 
     try:
         context.save_as_stage(SAVE_PATH)

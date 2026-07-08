@@ -21,8 +21,9 @@ services:
     ports:
       - "1883:1883"
     volumes:
-      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - mosquitto_data:/mosquitto/data
+    command: >
+      sh -c "printf 'listener 1883\nallow_anonymous true\npersistence true\npersistence_location /mosquitto/data/\nlog_dest stdout\nlog_type all\nmessage_size_limit 1048576\n' > /mosquitto/config/mosquitto.conf && mosquitto -c /mosquitto/config/mosquitto.conf"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "mosquitto_sub", "-t", "$$SYS/#", "-C", "1", "-i", "hc", "-W", "3"]
@@ -54,10 +55,12 @@ services:
 
   # ── Grafana ───────────────────────────────────────────────────────────────────
   grafana:
-    image: grafana/grafana:11.3.0
+    build:
+      context: ./grafana
+      dockerfile: Dockerfile
     container_name: smartclean-grafana
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD:-admin}
@@ -65,8 +68,6 @@ services:
       INFLUXDB_TOKEN: ${INFLUXDB_TOKEN:-smartclean-super-secret-token}
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       influxdb:
         condition: service_healthy

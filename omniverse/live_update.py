@@ -34,6 +34,8 @@ Improvements over HW3 omniverse_live_update.py
 """
 
 import asyncio
+import math
+import random
 
 import omni.usd
 from pxr import Gf, Usd, UsdGeom, Vt
@@ -80,8 +82,21 @@ COL_BATTERY_CRIT = Gf.Vec3f(0.90, 0.10, 0.10)
 # ---------------------------------------------------------------------------
 # InfluxDB client
 # ---------------------------------------------------------------------------
+OBSTACLE_INDICATOR_PATH = "/World/ObstacleIndicator"
+
 _influx = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
 _query_api = _influx.query_api()
+
+
+def _reconnect_influx():
+    global _influx, _query_api
+    try:
+        _influx.close()
+    except Exception:
+        pass
+    _influx = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
+    _query_api = _influx.query_api()
+    print("[INFO] InfluxDB client reconnected")
 
 
 def _query_latest(measurement, fields):
@@ -160,10 +175,33 @@ class SmartCleanTwinUpdater:
         # Detect new cleaning loop: robot returns to home cell after cleaning many tiles
         if tx == 1 and ty == 1 and len(self._visited) > 20:
             self._visited.clear()
+            rng = random.Random(42)
             for c in range(TILE_COUNT):
                 for r in range(TILE_COUNT):
-                    _set_color(stage, f"/World/CoverageGrid/Tile_{c}_{r}", COL_TILE_UNCLEANED)
-            print("[INFO] New cleaning loop started -- coverage grid reset")
+                    dirt = rng.uniform(0.0, 1.0)
+                    # Vary tile colour from clean beige (0.82,0.78,0.72) to dirty brown (0.45,0.35,0.25)
+                    col = Gf.Vec3f(0.82 - dirt * 0.37, 0.78 - dirt * 0.43, 0.72 - dirt * 0.47)
+                    _set_color(stage, f"/World/CoverageGrid/Tile_{c}_{r}", col)
+            print("[INFO] New cleaning loop — floor re-dirtied with randomised dirt map")
+
+    # ------------------------------------------------------------------
+    def _apply_obstacle_indicator(self, stage, tel, state):
+        """Move the red obstacle cube in front of the robot during EMERGENCY."""
+        prim = stage.GetPrimAtPath(OBSTACLE_INDICATOR_PATH)
+        if not prim.IsValid():
+            return
+        safety = str(state.get("safety_state", "SAFE")).upper()
+        if safety == "EMERGENCY":
+            x = float(tel.get("x_m", 0.0))
+            y = float(tel.get("y_m", 0.0))
+            heading = float(tel.get("heading_deg", 0.0))
+            rad = math.radians(heading)
+            ox = x + 0.35 * math.cos(rad)
+            oy = y + 0.35 * math.sin(rad)
+            UsdGeom.XformCommonAPI(prim).SetTranslate(Gf.Vec3d(ox, oy, 0.20))
+        else:
+            # Park underground — invisible
+            UsdGeom.XformCommonAPI(prim).SetTranslate(Gf.Vec3d(0.0, 0.0, -5.0))
 
     # ------------------------------------------------------------------
     def _apply_safety(self, stage, state):
@@ -211,6 +249,7 @@ class SmartCleanTwinUpdater:
         self._apply_pose(stage, tel)
         self._apply_safety(stage, state)
         self._apply_battery(stage, tel)
+        self._apply_obstacle_indicator(stage, tel, state)
 
         x = tel.get("x_m", "?")
         y = tel.get("y_m", "?")
@@ -248,7 +287,11 @@ async def _loop():
         try:
             _updater.tick()
         except Exception as exc:
-            print(f"[ERROR] Tick: {exc}")
+            print(f"[ERROR] Tick: {exc} — attempting InfluxDB reconnect")
+            try:
+                _reconnect_influx()
+            except Exception as reconn_exc:
+                print(f"[ERROR] Reconnect failed: {reconn_exc}")
         await asyncio.sleep(UPDATE_INTERVAL_S)
     print("[INFO] Live update stopped.")
 

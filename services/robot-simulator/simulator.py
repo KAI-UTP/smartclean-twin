@@ -33,6 +33,9 @@ SEED = int(os.environ.get("SIMULATOR_SEED", "42"))
 MQTT_HOST = os.environ.get("MQTT_HOST", "mosquitto")
 MQTT_PORT = int(os.environ.get("MQTT_PORT", "1883"))
 TICKS_TO_CLEAN = 3  # ticks the robot must stay in a cell to clean it
+CHARGE_THRESHOLD = 20.0  # % SoC — auto-return home below this
+CHARGE_FULL = 80.0  # % SoC — resume cleaning above this
+CHARGE_RATE = 10.0  # % per minute charge rate at home station
 
 
 class RobotSimulator:
@@ -126,6 +129,42 @@ class RobotSimulator:
                 s.speed_mps = 0.0
                 return
 
+            # Auto-return home when battery is low (fault injection overrides this)
+            if (
+                s.battery_soc < CHARGE_THRESHOLD
+                and not s.returning_home
+                and not s.inject_low_battery
+                and s.mode == "CLEANING"
+            ):
+                s.returning_home = True
+                s.mode = "RETURNING"
+                logger.info(
+                    "Battery %.1f%% < %.0f%% — returning home to charge",
+                    s.battery_soc,
+                    CHARGE_THRESHOLD,
+                )
+
+            # Charging at home station
+            if (
+                s.row == gm.HOME_ROW
+                and s.col == gm.HOME_COL
+                and s.mode in ("RETURNING", "CHARGING")
+            ):
+                if s.battery_soc < CHARGE_FULL:
+                    s.returning_home = False
+                    s.mode = "CHARGING"
+                    s.speed_mps = 0.0
+                    s.brush_on = False
+                    s.pump_on = False
+                    s.battery_soc = min(
+                        100.0, s.battery_soc + CHARGE_RATE * TELEMETRY_INTERVAL / 60.0
+                    )
+                    return
+                else:
+                    s.mode = "CLEANING"
+                    s.brush_on = True
+                    logger.info("Battery charged to %.1f%% — resuming cleaning", s.battery_soc)
+
             # Fault injections
             if s.inject_obstacle:
                 s.obstacle_cm = 15.0
@@ -133,7 +172,7 @@ class RobotSimulator:
                 return
             if s.inject_motor_overload:
                 s.motor_current_a = 3.5
-            if s.inject_low_battery:
+            if s.inject_low_battery and s.mode != "CHARGING":
                 s.battery_soc = max(0.0, s.battery_soc - 5.0)
 
             if s.returning_home:
@@ -202,9 +241,9 @@ class RobotSimulator:
                 angle = math.degrees(math.atan2(target_col - s.col, target_row - s.row))
                 s.heading_deg = angle % 360.0
 
-            # Battery drain
+            # Battery drain (suppressed while charging)
             drain = 0.05 + (0.02 if s.brush_on else 0.0) + (0.01 if s.pump_on else 0.0)
-            if not s.inject_low_battery:
+            if not s.inject_low_battery and s.mode != "CHARGING":
                 s.battery_soc = max(0.0, s.battery_soc - drain * TELEMETRY_INTERVAL / 60.0)
             s.battery_v = 10.0 + s.battery_soc / 100.0 * 2.6
             s.battery_a = 1.2 + (0.3 if s.brush_on else 0.0)

@@ -428,6 +428,54 @@
         "datasource": {"type": "influxdb", "uid": "InfluxDB"},
         "query": "from(bucket: \"smartclean_twin\") |> range(start: -1h) |> filter(fn: (r) => r._measurement == \"robot_alarm\") |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\") |> sort(columns: [\"_time\"], desc: true) |> limit(n: 50)"
       }]
+    },
+    {
+      "id": 19,
+      "title": "Battery Discharge Rate (%/min)",
+      "type": "timeseries",
+      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 48},
+      "description": "Rate of battery SoC change per minute. Negative = discharging, positive = charging at home station. Spikes to positive confirm the auto-charge cycle is working.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": {"lineWidth": 2, "fillOpacity": 10},
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green", "value": null},
+            {"color": "orange", "value": -0.5},
+            {"color": "red", "value": -1.0}
+          ]},
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"tooltip": {"mode": "single"}, "legend": {"displayMode": "list"}},
+      "targets": [{"refId": "A",
+        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
+        "query": "from(bucket: \"smartclean_twin\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"battery_soc\") |> derivative(unit: 1m, nonNegative: false) |> yield(name: \"battery_discharge_rate\")"
+      }]
+    },
+    {
+      "id": 20,
+      "title": "Cleaning Coverage Progress (%)",
+      "type": "timeseries",
+      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 48},
+      "description": "Cleaning coverage percentage over time. Shows the robot progressing toward 100%, dropping back to 0% at the start of each new loop, and rising again. Each complete cycle confirms the continuous lawnmower path.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0, "max": 100,
+          "custom": {"lineWidth": 2, "fillOpacity": 20},
+          "color": {"mode": "fixed", "fixedColor": "teal"},
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "blue", "value": null},
+            {"color": "green", "value": 90}
+          ]}
+        }
+      },
+      "options": {"tooltip": {"mode": "single"}, "legend": {"displayMode": "list"}},
+      "targets": [{"refId": "A",
+        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
+        "query": "from(bucket: \"smartclean_twin\") |> range(start: -30m) |> filter(fn: (r) => r._measurement == \"robot_state\" and r._field == \"cleaning_coverage_pct\") |> aggregateWindow(every: 10s, fn: last, createEmpty: false) |> yield(name: \"coverage_progress\")"
+      }]
     }
   ],
   "schemaVersion": 36,
