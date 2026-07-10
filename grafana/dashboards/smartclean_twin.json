@@ -1,144 +1,262 @@
-﻿{
+{
   "title": "SmartClean Twin - Robot Dashboard",
   "uid": "smartclean-main",
   "version": 1,
   "refresh": "5s",
-  "time": {"from": "now-15m", "to": "now"},
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
   "panels": [
     {
       "id": 1,
       "title": "Battery State of Charge (%)",
       "type": "gauge",
-      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0},
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
-          "min": 0, "max": 100,
+          "min": 0,
+          "max": 100,
           "thresholds": {
             "steps": [
-              {"color": "red", "value": 0},
-              {"color": "orange", "value": 20},
-              {"color": "green", "value": 50}
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 20
+              },
+              {
+                "color": "green",
+                "value": 50
+              }
             ]
           }
         }
       },
-      "targets": [{
-        "refId": "A",
-        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"battery_soc\") |> last()"
-      }]
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"battery_soc\") |> last()"
+        }
+      ]
     },
     {
       "id": 2,
       "title": "Motor Current (A)",
       "type": "timeseries",
-      "gridPos": {"h": 6, "w": 9, "x": 6, "y": 0},
+      "gridPos": {
+        "h": 6,
+        "w": 9,
+        "x": 6,
+        "y": 0
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "amp",
           "thresholds": {
             "steps": [
-              {"color": "green", "value": 0},
-              {"color": "orange", "value": 1.5},
-              {"color": "red", "value": 2.5}
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 1.5
+              },
+              {
+                "color": "red",
+                "value": 2.5
+              }
             ]
           }
         }
       },
-      "targets": [{
-        "refId": "A",
-        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"motor_current_a\")"
-      }]
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "query": "from(bucket: \"smartclean_twin\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"motor_current_a\")"
+        }
+      ]
     },
     {
       "id": 3,
       "title": "Cleaning Coverage (%)",
       "type": "gauge",
-      "gridPos": {"h": 6, "w": 9, "x": 15, "y": 0},
+      "gridPos": {
+        "h": 6,
+        "w": 9,
+        "x": 15,
+        "y": 0
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
-          "min": 0, "max": 100,
+          "min": 0,
+          "max": 100,
           "thresholds": {
             "steps": [
-              {"color": "blue", "value": 0},
-              {"color": "green", "value": 90}
+              {
+                "color": "blue",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 90
+              }
             ]
           }
         }
       },
-      "targets": [{
-        "refId": "A",
-        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_state\" and r._field == \"cleaning_coverage_pct\") |> last()"
-      }]
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_state\" and r._field == \"cleaning_coverage_pct\") |> last()"
+        }
+      ]
     },
     {
       "id": 4,
       "title": "Robot Position X (m)",
       "type": "timeseries",
-      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 6},
-      "targets": [{
-        "refId": "A",
-        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and (r._field == \"x_m\" or r._field == \"y_m\"))"
-      }]
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "query": "from(bucket: \"smartclean_twin\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and (r._field == \"x_m\" or r._field == \"y_m\"))"
+        }
+      ]
     },
     {
       "id": 5,
       "title": "Obstacle Distance (cm)",
       "type": "timeseries",
-      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 6},
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "lengthcm",
           "thresholds": {
             "steps": [
-              {"color": "red", "value": 0},
-              {"color": "orange", "value": 25},
-              {"color": "green", "value": 50}
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 25
+              },
+              {
+                "color": "green",
+                "value": 50
+              }
             ]
           }
         }
       },
-      "targets": [{
-        "refId": "A",
-        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"obstacle_cm\")"
-      }]
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "query": "from(bucket: \"smartclean_twin\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"obstacle_cm\")"
+        }
+      ]
     },
     {
       "id": 6,
       "title": "Motor Temperature (C)",
       "type": "timeseries",
-      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 12},
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "celsius",
           "thresholds": {
             "steps": [
-              {"color": "green", "value": 0},
-              {"color": "orange", "value": 55},
-              {"color": "red", "value": 70}
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 55
+              },
+              {
+                "color": "red",
+                "value": 70
+              }
             ]
           }
         }
       },
-      "targets": [{
-        "refId": "A",
-        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"motor_temperature_c\")"
-      }]
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "query": "from(bucket: \"smartclean_twin\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"motor_temperature_c\")"
+        }
+      ]
     },
     {
       "id": 7,
       "title": "Safety State",
       "type": "stat",
-      "gridPos": {"h": 6, "w": 6, "x": 12, "y": 12},
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 12
+      },
       "options": {
-        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "textMode": "auto",
         "colorMode": "background",
         "graphMode": "none",
@@ -147,28 +265,67 @@
       "fieldConfig": {
         "defaults": {
           "mappings": [
-            {"type": "value", "options": {
-              "1": {"text": "SAFE",      "color": "green",  "index": 0},
-              "2": {"text": "WARNING",   "color": "orange", "index": 1},
-              "3": {"text": "EMERGENCY", "color": "red",    "index": 2}
-            }}
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "SAFE",
+                  "color": "green",
+                  "index": 0
+                },
+                "2": {
+                  "text": "WARNING",
+                  "color": "orange",
+                  "index": 1
+                },
+                "3": {
+                  "text": "EMERGENCY",
+                  "color": "red",
+                  "index": 2
+                }
+              }
+            }
           ],
-          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
         }
       },
-      "targets": [{
-        "refId": "A",
-        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_state\" and r._field == \"safety_state\") |> last() |> map(fn: (r) => ({r with _value: if r._value == \"SAFE\" then 1 else if r._value == \"WARNING\" then 2 else if r._value == \"EMERGENCY\" then 3 else 0}))"
-      }]
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_state\" and r._field == \"safety_state\") |> last() |> map(fn: (r) => ({r with _value: if r._value == \"SAFE\" then 1 else if r._value == \"WARNING\" then 2 else if r._value == \"EMERGENCY\" then 3 else 0}))"
+        }
+      ]
     },
     {
       "id": 8,
       "title": "Mission State",
       "type": "stat",
-      "gridPos": {"h": 6, "w": 6, "x": 18, "y": 12},
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 12
+      },
       "options": {
-        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "textMode": "auto",
         "colorMode": "background",
         "graphMode": "none",
@@ -177,30 +334,77 @@
       "fieldConfig": {
         "defaults": {
           "mappings": [
-            {"type": "value", "options": {
-              "0": {"text": "NOT STARTED", "color": "gray",   "index": 0},
-              "1": {"text": "RUNNING",     "color": "green",  "index": 1},
-              "2": {"text": "PAUSED",      "color": "orange", "index": 2},
-              "3": {"text": "COMPLETED",   "color": "blue",   "index": 3},
-              "4": {"text": "ABORTED",     "color": "red",    "index": 4}
-            }}
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "NOT STARTED",
+                  "color": "gray",
+                  "index": 0
+                },
+                "1": {
+                  "text": "RUNNING",
+                  "color": "green",
+                  "index": 1
+                },
+                "2": {
+                  "text": "PAUSED",
+                  "color": "orange",
+                  "index": 2
+                },
+                "3": {
+                  "text": "COMPLETED",
+                  "color": "blue",
+                  "index": 3
+                },
+                "4": {
+                  "text": "ABORTED",
+                  "color": "red",
+                  "index": 4
+                }
+              }
+            }
           ],
-          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
         }
       },
-      "targets": [{
-        "refId": "A",
-        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_state\" and r._field == \"mission_state\") |> last() |> map(fn: (r) => ({r with _value: if r._value == \"NOT_STARTED\" then 0 else if r._value == \"RUNNING\" then 1 else if r._value == \"PAUSED\" then 2 else if r._value == \"COMPLETED\" then 3 else if r._value == \"ABORTED\" then 4 else -1}))"
-      }]
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_state\" and r._field == \"mission_state\") |> last() |> map(fn: (r) => ({r with _value: if r._value == \"NOT_STARTED\" then 0 else if r._value == \"RUNNING\" then 1 else if r._value == \"PAUSED\" then 2 else if r._value == \"COMPLETED\" then 3 else if r._value == \"ABORTED\" then 4 else -1}))"
+        }
+      ]
     },
     {
       "id": 9,
       "title": "AI Motor Health Prediction",
       "type": "stat",
-      "gridPos": {"h": 4, "w": 8, "x": 0, "y": 18},
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 18
+      },
       "options": {
-        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "textMode": "auto",
         "colorMode": "background",
         "graphMode": "none",
@@ -209,29 +413,72 @@
       "fieldConfig": {
         "defaults": {
           "mappings": [
-            {"type": "value", "options": {
-              "1": {"text": "NORMAL",     "color": "green",    "index": 0},
-              "2": {"text": "HIGH LOAD",  "color": "orange",   "index": 1},
-              "3": {"text": "OVERHEATED", "color": "red",      "index": 2},
-              "4": {"text": "FAULT",      "color": "dark-red", "index": 3}
-            }}
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "NORMAL",
+                  "color": "green",
+                  "index": 0
+                },
+                "2": {
+                  "text": "HIGH LOAD",
+                  "color": "orange",
+                  "index": 1
+                },
+                "3": {
+                  "text": "OVERHEATED",
+                  "color": "red",
+                  "index": 2
+                },
+                "4": {
+                  "text": "FAULT",
+                  "color": "dark-red",
+                  "index": 3
+                }
+              }
+            }
           ],
-          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
         }
       },
-      "targets": [{
-        "refId": "A",
-        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_prediction\" and r._field == \"motor_health\") |> last() |> map(fn: (r) => ({r with _value: if r._value == \"NORMAL\" then 1 else if r._value == \"HIGH_LOAD\" then 2 else if r._value == \"OVERHEATED\" then 3 else if r._value == \"FAULT\" then 4 else 0}))"
-      }]
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_prediction\" and r._field == \"motor_health\") |> last() |> map(fn: (r) => ({r with _value: if r._value == \"NORMAL\" then 1 else if r._value == \"HIGH_LOAD\" then 2 else if r._value == \"OVERHEATED\" then 3 else if r._value == \"FAULT\" then 4 else 0}))"
+        }
+      ]
     },
     {
       "id": 10,
       "title": "AI Dirt Level Prediction",
       "type": "stat",
-      "gridPos": {"h": 4, "w": 8, "x": 8, "y": 18},
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 18
+      },
       "options": {
-        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "textMode": "auto",
         "colorMode": "background",
         "graphMode": "none",
@@ -240,28 +487,67 @@
       "fieldConfig": {
         "defaults": {
           "mappings": [
-            {"type": "value", "options": {
-              "1": {"text": "CLEAN",    "color": "green",  "index": 0},
-              "2": {"text": "MODERATE", "color": "orange", "index": 1},
-              "3": {"text": "DIRTY",    "color": "red",    "index": 2}
-            }}
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "CLEAN",
+                  "color": "green",
+                  "index": 0
+                },
+                "2": {
+                  "text": "MODERATE",
+                  "color": "orange",
+                  "index": 1
+                },
+                "3": {
+                  "text": "DIRTY",
+                  "color": "red",
+                  "index": 2
+                }
+              }
+            }
           ],
-          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
         }
       },
-      "targets": [{
-        "refId": "A",
-        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_prediction\" and r._field == \"dirt_level\") |> last() |> map(fn: (r) => ({r with _value: if r._value == \"CLEAN\" then 1 else if r._value == \"MODERATE\" then 2 else if r._value == \"DIRTY\" then 3 else 0}))"
-      }]
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_prediction\" and r._field == \"dirt_level\") |> last() |> map(fn: (r) => ({r with _value: if r._value == \"CLEAN\" then 1 else if r._value == \"MODERATE\" then 2 else if r._value == \"DIRTY\" then 3 else 0}))"
+        }
+      ]
     },
     {
       "id": 11,
       "title": "Active Alarm Count",
       "type": "stat",
-      "gridPos": {"h": 4, "w": 8, "x": 16, "y": 18},
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 18
+      },
       "options": {
-        "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "textMode": "value",
         "colorMode": "background",
         "graphMode": "none",
@@ -271,213 +557,549 @@
         "defaults": {
           "thresholds": {
             "steps": [
-              {"color": "green", "value": 0},
-              {"color": "red", "value": 1}
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
             ]
           }
         }
       },
-      "targets": [{
-        "refId": "A",
-        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_state\" and r._field == \"alarm_count\") |> last()"
-      }]
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_state\" and r._field == \"alarm_count\") |> last()"
+        }
+      ]
     },
     {
       "id": 12,
       "title": "Battery Voltage (V)",
       "type": "timeseries",
-      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 22},
-      "targets": [{
-        "refId": "A",
-        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"battery_v\")"
-      }]
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 22
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "query": "from(bucket: \"smartclean_twin\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"battery_v\")"
+        }
+      ]
     },
     {
       "id": 13,
       "title": "Dirt Score",
       "type": "timeseries",
-      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 22},
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 22
+      },
       "fieldConfig": {
         "defaults": {
-          "min": 0, "max": 1,
+          "min": 0,
+          "max": 1,
           "thresholds": {
             "steps": [
-              {"color": "green", "value": 0},
-              {"color": "orange", "value": 0.3},
-              {"color": "red", "value": 0.7}
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 0.3
+              },
+              {
+                "color": "red",
+                "value": 0.7
+              }
             ]
           }
         }
       },
-      "targets": [{
-        "refId": "A",
-        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"dirt_score\")"
-      }]
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "query": "from(bucket: \"smartclean_twin\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"dirt_score\")"
+        }
+      ]
     },
     {
       "id": 15,
-      "title": "Mean Motor Current — 30s Window (A)",
+      "title": "Mean Motor Current \u2014 30s Window (A)",
       "type": "timeseries",
-      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 36},
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 36
+      },
       "description": "30-second mean aggregation of motor current. Each point represents the average of ~30 raw 1s samples, smoothing noise while showing trend. Aggregation window justified: data arrives every 1s, so 30s aggregates ~30 points per bucket.",
       "fieldConfig": {
         "defaults": {
           "unit": "amp",
-          "custom": {"lineWidth": 2},
+          "custom": {
+            "lineWidth": 2
+          },
           "thresholds": {
             "steps": [
-              {"color": "green", "value": 0},
-              {"color": "orange", "value": 1.5},
-              {"color": "red", "value": 2.5}
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 1.5
+              },
+              {
+                "color": "red",
+                "value": 2.5
+              }
             ]
           }
         }
       },
-      "targets": [{
-        "refId": "A",
-        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"motor_current_a\") |> aggregateWindow(every: 30s, fn: mean, createEmpty: false) |> yield(name: \"mean_motor_current_30s\")"
-      }]
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "query": "from(bucket: \"smartclean_twin\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"motor_current_a\") |> aggregateWindow(every: 30s, fn: mean, createEmpty: false) |> yield(name: \"mean_motor_current_30s\")"
+        }
+      ]
     },
     {
       "id": 16,
-      "title": "Max Motor Temperature — 30s Window (C)",
+      "title": "Max Motor Temperature \u2014 30s Window (C)",
       "type": "timeseries",
-      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 36},
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 36
+      },
       "description": "30-second maximum aggregation of motor temperature. Shows the worst-case temperature in each window, useful for detecting overheating trends that a mean would understate.",
       "fieldConfig": {
         "defaults": {
           "unit": "celsius",
-          "custom": {"lineWidth": 2},
+          "custom": {
+            "lineWidth": 2
+          },
           "thresholds": {
             "steps": [
-              {"color": "green", "value": 0},
-              {"color": "orange", "value": 55},
-              {"color": "red", "value": 70}
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 55
+              },
+              {
+                "color": "red",
+                "value": 70
+              }
             ]
           }
         }
       },
-      "targets": [{
-        "refId": "A",
-        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"motor_temperature_c\") |> aggregateWindow(every: 30s, fn: max, createEmpty: false) |> yield(name: \"max_motor_temp_30s\")"
-      }]
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "query": "from(bucket: \"smartclean_twin\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"motor_temperature_c\") |> aggregateWindow(every: 30s, fn: max, createEmpty: false) |> yield(name: \"max_motor_temp_30s\")"
+        }
+      ]
     },
     {
       "id": 17,
-      "title": "Mean Battery SoC — 1m Window (%)",
+      "title": "Mean Battery SoC \u2014 1m Window (%)",
       "type": "timeseries",
-      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 42},
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 42
+      },
       "description": "1-minute mean aggregation of battery state of charge. Smooths short-term fluctuations to show the battery discharge trend clearly over time.",
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
-          "min": 0, "max": 100,
-          "custom": {"lineWidth": 2},
+          "min": 0,
+          "max": 100,
+          "custom": {
+            "lineWidth": 2
+          },
           "thresholds": {
             "steps": [
-              {"color": "red", "value": 0},
-              {"color": "orange", "value": 20},
-              {"color": "green", "value": 50}
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 20
+              },
+              {
+                "color": "green",
+                "value": 50
+              }
             ]
           }
         }
       },
-      "targets": [{
-        "refId": "A",
-        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -30m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"battery_soc\") |> aggregateWindow(every: 1m, fn: mean, createEmpty: false) |> yield(name: \"mean_battery_soc_1m\")"
-      }]
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "query": "from(bucket: \"smartclean_twin\") |> range(start: -30m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"battery_soc\") |> aggregateWindow(every: 1m, fn: mean, createEmpty: false) |> yield(name: \"mean_battery_soc_1m\")"
+        }
+      ]
     },
     {
       "id": 18,
       "title": "Alarm Count per Minute",
       "type": "timeseries",
-      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 42},
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 42
+      },
       "description": "Count of alarm events aggregated per 1-minute window. Spikes indicate periods of sustained fault conditions. Uses count() reduction to convert alarm records into a frequency metric.",
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "custom": {"lineWidth": 2, "fillOpacity": 20},
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20
+          },
           "thresholds": {
             "steps": [
-              {"color": "green", "value": 0},
-              {"color": "orange", "value": 3},
-              {"color": "red", "value": 10}
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 3
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
             ]
           }
         }
       },
-      "targets": [{
-        "refId": "A",
-        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -1h) |> filter(fn: (r) => r._measurement == \"robot_alarm\") |> filter(fn: (r) => r._field == \"description\") |> aggregateWindow(every: 1m, fn: count, createEmpty: false) |> yield(name: \"alarm_count_per_min\")"
-      }]
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "query": "from(bucket: \"smartclean_twin\") |> range(start: -1h) |> filter(fn: (r) => r._measurement == \"robot_alarm\") |> filter(fn: (r) => r._field == \"description\") |> aggregateWindow(every: 1m, fn: count, createEmpty: false) |> yield(name: \"alarm_count_per_min\")"
+        }
+      ]
     },
     {
       "id": 14,
       "title": "Alarm History",
       "type": "table",
-      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 28},
-      "targets": [{
-        "refId": "A",
-        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -1h) |> filter(fn: (r) => r._measurement == \"robot_alarm\") |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\") |> sort(columns: [\"_time\"], desc: true) |> limit(n: 50)"
-      }]
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 28
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "query": "from(bucket: \"smartclean_twin\") |> range(start: -1h) |> filter(fn: (r) => r._measurement == \"robot_alarm\") |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\") |> sort(columns: [\"_time\"], desc: true) |> limit(n: 50)"
+        }
+      ]
     },
     {
       "id": 19,
       "title": "Battery Discharge Rate (%/min)",
       "type": "timeseries",
-      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 48},
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 48
+      },
       "description": "Rate of battery SoC change per minute. Negative = discharging, positive = charging at home station. Spikes to positive confirm the auto-charge cycle is working.",
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
-          "custom": {"lineWidth": 2, "fillOpacity": 10},
-          "thresholds": {"mode": "absolute", "steps": [
-            {"color": "green", "value": null},
-            {"color": "orange", "value": -0.5},
-            {"color": "red", "value": -1.0}
-          ]},
-          "color": {"mode": "thresholds"}
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": -0.5
+              },
+              {
+                "color": "red",
+                "value": -1.0
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
         }
       },
-      "options": {"tooltip": {"mode": "single"}, "legend": {"displayMode": "list"}},
-      "targets": [{"refId": "A",
-        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"battery_soc\") |> derivative(unit: 1m, nonNegative: false) |> yield(name: \"battery_discharge_rate\")"
-      }]
+      "options": {
+        "tooltip": {
+          "mode": "single"
+        },
+        "legend": {
+          "displayMode": "list"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "query": "from(bucket: \"smartclean_twin\") |> range(start: -15m) |> filter(fn: (r) => r._measurement == \"robot_telemetry\" and r._field == \"battery_soc\") |> derivative(unit: 1m, nonNegative: false) |> yield(name: \"battery_discharge_rate\")"
+        }
+      ]
     },
     {
       "id": 20,
       "title": "Cleaning Coverage Progress (%)",
       "type": "timeseries",
-      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 48},
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 48
+      },
       "description": "Cleaning coverage percentage over time. Shows the robot progressing toward 100%, dropping back to 0% at the start of each new loop, and rising again. Each complete cycle confirms the continuous lawnmower path.",
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
-          "min": 0, "max": 100,
-          "custom": {"lineWidth": 2, "fillOpacity": 20},
-          "color": {"mode": "fixed", "fixedColor": "teal"},
-          "thresholds": {"mode": "absolute", "steps": [
-            {"color": "blue", "value": null},
-            {"color": "green", "value": 90}
-          ]}
+          "min": 0,
+          "max": 100,
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "teal"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 90
+              }
+            ]
+          }
         }
       },
-      "options": {"tooltip": {"mode": "single"}, "legend": {"displayMode": "list"}},
-      "targets": [{"refId": "A",
-        "datasource": {"type": "influxdb", "uid": "InfluxDB"},
-        "query": "from(bucket: \"smartclean_twin\") |> range(start: -30m) |> filter(fn: (r) => r._measurement == \"robot_state\" and r._field == \"cleaning_coverage_pct\") |> aggregateWindow(every: 10s, fn: last, createEmpty: false) |> yield(name: \"coverage_progress\")"
-      }]
+      "options": {
+        "tooltip": {
+          "mode": "single"
+        },
+        "legend": {
+          "displayMode": "list"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "query": "from(bucket: \"smartclean_twin\") |> range(start: -30m) |> filter(fn: (r) => r._measurement == \"robot_state\" and r._field == \"cleaning_coverage_pct\") |> aggregateWindow(every: 10s, fn: last, createEmpty: false) |> yield(name: \"coverage_progress\")"
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "title": "AI Health State (HW4 Classifier)",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 56
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "NORMAL": {
+                  "text": "NORMAL",
+                  "color": "green",
+                  "index": 0
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "WARNING": {
+                  "text": "WARNING",
+                  "color": "orange",
+                  "index": 1
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "CRITICAL": {
+                  "text": "CRITICAL",
+                  "color": "red",
+                  "index": 2
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_prediction\" and r._field == \"health_state\") |> last()"
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "title": "Predicted RUL \u2014 minutes remaining (HW4 Regressor)",
+      "type": "gauge",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 56
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "min": 0,
+          "max": 130,
+          "thresholds": {
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 30
+              },
+              {
+                "color": "green",
+                "value": 60
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "InfluxDB"
+          },
+          "query": "from(bucket: \"smartclean_twin\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"robot_prediction\" and r._field == \"predicted_rul_minutes\") |> last()"
+        }
+      ]
     }
   ],
   "schemaVersion": 36,
-  "tags": ["smartclean", "digital-twin", "robot"]
+  "tags": [
+    "smartclean",
+    "digital-twin",
+    "robot"
+  ]
 }

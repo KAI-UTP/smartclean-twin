@@ -67,6 +67,9 @@ def _write_prediction(robot_id: str, result: dict) -> None:
             .field("motor_health_confidence", float(result["motor_health_confidence"]))
             .field("dirt_level", str(result["dirt_level_prediction"]))
             .field("dirt_level_confidence", float(result["dirt_level_confidence"]))
+            .field("health_state", str(result["health_state_prediction"]))
+            .field("health_state_confidence", float(result["health_state_confidence"]))
+            .field("predicted_rul_minutes", float(result["predicted_rul_minutes"]))
             .time(datetime.now(timezone.utc))
         )
         wa.write(bucket=INFLUXDB_BUCKET, org=INFLUXDB_ORG, record=point)
@@ -92,6 +95,9 @@ def _on_message(client: mqtt.Client, userdata, msg: mqtt.MQTTMessage) -> None:
         pump_on=a.pump_on,
         battery_a=s.battery_a,
         dirt_score=s.dirt_score,
+        battery_v=s.battery_v,
+        battery_soc=s.battery_soc,
+        water_level_pct=s.water_level_pct,
     )
 
     prediction_msg = {
@@ -106,10 +112,12 @@ def _on_message(client: mqtt.Client, userdata, msg: mqtt.MQTTMessage) -> None:
 
     if _predictions_made % 60 == 0:
         logger.info(
-            "Predictions made=%d motor=%s dirt=%s model=%s",
+            "Predictions made=%d motor=%s dirt=%s health=%s rul=%.1fmin model=%s",
             _predictions_made,
             result["motor_health_prediction"],
             result["dirt_level_prediction"],
+            result["health_state_prediction"],
+            result["predicted_rul_minutes"],
             result.get("model_used"),
         )
 
