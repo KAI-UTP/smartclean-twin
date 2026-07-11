@@ -983,7 +983,8 @@
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
-          ]
+          ],
+          "fields": "/.*/"
         },
         "colorMode": "background",
         "graphMode": "none",
