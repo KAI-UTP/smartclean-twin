@@ -971,7 +971,7 @@
     },
     {
       "id": 21,
-      "title": "AI Health State (HW4 Classifier)",
+      "title": "AI Health State",
       "type": "stat",
       "gridPos": {
         "h": 4,
@@ -1047,7 +1047,7 @@
     },
     {
       "id": 22,
-      "title": "Predicted RUL \u2014 minutes remaining (HW4 Regressor)",
+      "title": "Predicted Remaining Useful Life (minutes)",
       "type": "gauge",
       "gridPos": {
         "h": 4,
