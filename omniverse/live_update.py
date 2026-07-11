@@ -141,10 +141,29 @@ def _set_scale_x(stage, path, sx):
 # ---------------------------------------------------------------------------
 # Updater — keeps state across ticks
 # ---------------------------------------------------------------------------
+TRAIL_LENGTH = 60  # breadcrumb dots behind the robot (oldest is reused)
+TRAIL_COLOR = Gf.Vec3f(0.15, 0.45, 0.95)  # blue
+
+
 class SmartCleanTwinUpdater:
     def __init__(self):
         self._visited = set()  # grid cells (tx, ty) the robot has cleaned
         self._flash = False  # toggles each tick during EMERGENCY
+        self._trail_idx = 0  # next breadcrumb slot (cycles 0..TRAIL_LENGTH-1)
+        self._last_trail_pos = None
+
+    # ------------------------------------------------------------------
+    def _apply_trail(self, stage, x, y):
+        """Drop a breadcrumb dot at the robot position — shows the path taken."""
+        pos = (round(float(x), 2), round(float(y), 2))
+        if pos == self._last_trail_pos:
+            return  # robot stationary — don't stack dots
+        self._last_trail_pos = pos
+        dot = UsdGeom.Sphere.Define(stage, f"/World/Trail/Dot_{self._trail_idx}")
+        dot.CreateRadiusAttr(0.03)
+        UsdGeom.XformCommonAPI(dot).SetTranslate(Gf.Vec3d(float(x), float(y), 0.03))
+        dot.CreateDisplayColorAttr(Vt.Vec3fArray([TRAIL_COLOR]))
+        self._trail_idx = (self._trail_idx + 1) % TRAIL_LENGTH
 
     # ------------------------------------------------------------------
     def _apply_pose(self, stage, tel):
@@ -163,6 +182,8 @@ class SmartCleanTwinUpdater:
             Gf.Vec3f(0.0, 0.0, float(tel.get("heading_deg", 0.0))),
             UsdGeom.XformCommonAPI.RotationOrderXYZ,
         )
+
+        self._apply_trail(stage, x, y)
 
         # Light up the tile the robot is currently on (x_m / 0.5 = col index)
         tx = int(float(x) / CELL_SIZE_M)

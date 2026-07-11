@@ -183,6 +183,18 @@ class PredictionMessage(BaseModel):
     motor_health_confidence: float = Field(..., ge=0.0, le=1.0)
     dirt_level_prediction: DirtLevel
     dirt_level_confidence: float = Field(..., ge=0.0, le=1.0)
+    # Health-state classification + RUL regression
+    health_state_prediction: Optional[str] = None
+    health_state_confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    predicted_rul_minutes: Optional[float] = Field(default=None, ge=0.0)
+    # Unsupervised anomaly detection
+    anomaly_score: Optional[float] = None
+    is_anomaly: Optional[bool] = None
+    # Trend-based operational forecasts
+    minutes_to_empty: Optional[float] = Field(default=None, ge=0.0)
+    minutes_to_finish: Optional[float] = Field(default=None, ge=0.0)
+    # Operator guidance
+    recommendation: Optional[str] = None
 
 
 # ── Alert message ─────────────────────────────────────────────────────────────

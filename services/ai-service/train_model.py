@@ -284,6 +284,96 @@ def train_and_save_hw4(df: pd.DataFrame) -> dict[str, float]:
     return results
 
 
+# ── Anomaly detection (unsupervised) ─────────────────────────────────────────
+
+ANOMALY_FEATURES = [
+    "motor_current_a",
+    "motor_temperature_c",
+    "speed_mps",
+    "battery_v",
+    "battery_a",
+]
+
+
+def generate_normal_operation_dataset(n: int = 4000, seed: int = SEED) -> pd.DataFrame:
+    """Sample sensor values from NORMAL robot operation only.
+
+    Ranges mirror the simulator's healthy behaviour:
+      motor_current_a     0.6 (idle) to 0.9 (brush on)
+      motor_temperature_c 20-70 (normal thermal envelope)
+      speed_mps           0.0 / 0.1 / 0.2 discrete speeds
+      battery_v           10.0-12.6 (SoC-linked)
+      battery_a           1.2-1.5
+    Fault-injected values (current 3.5 A, temp > 80) fall outside these
+    ranges, so the IsolationForest flags them as anomalies.
+    """
+    rng = np.random.default_rng(seed)
+    return pd.DataFrame(
+        {
+            "motor_current_a": rng.normal(0.75, 0.18, n).clip(0.3, 1.4),
+            "motor_temperature_c": rng.normal(42, 11, n).clip(20, 70),
+            "speed_mps": rng.choice([0.0, 0.1, 0.2], n, p=[0.15, 0.15, 0.70])
+            + rng.normal(0, 0.01, n),
+            "battery_v": rng.uniform(10.0, 12.6, n),
+            "battery_a": rng.normal(1.35, 0.12, n).clip(1.0, 1.8),
+        }
+    )
+
+
+ANOMALY_Z_THRESHOLD = 4.5  # sigmas — beyond this any single sensor is anomalous
+
+
+def anomaly_predict(params: dict, X: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Score samples against the learned normal-operation statistics.
+
+    Returns (scores, is_anomaly). Score = threshold - max |z-score| across
+    features, so score > 0 means normal and score < 0 means anomaly. Used
+    by both this training script (sanity check) and predictor.py.
+    """
+    z = np.abs((X - params["mean"]) / params["std"])
+    max_z = z.max(axis=1)
+    scores = params["threshold"] - max_z
+    return scores, scores < 0
+
+
+def train_and_save_anomaly(df: pd.DataFrame) -> dict[str, float]:
+    """Learn normal-operation statistics for unsupervised anomaly detection.
+
+    The model is the per-sensor mean and standard deviation of healthy
+    operation. A sample is anomalous when ANY sensor deviates by more than
+    ANOMALY_Z_THRESHOLD sigmas — e.g. fault-injected 3.5 A motor current
+    is (3.5 - 0.75) / 0.18 = 15 sigma, far past the threshold, while all
+    healthy readings stay within ~4 sigma. Simple, fully explainable, and
+    learned from data (no hand-tuned per-sensor limits).
+    """
+    X = df[ANOMALY_FEATURES].values
+    params = {
+        "features": ANOMALY_FEATURES,
+        "mean": X.mean(axis=0),
+        "std": X.std(axis=0),
+        "threshold": ANOMALY_Z_THRESHOLD,
+    }
+
+    # Sanity check: known fault signatures must be flagged as anomalies
+    fault_samples = np.array(
+        [
+            [3.5, 85.0, 0.0, 10.2, 1.5],  # motor overload + overheat
+            [0.7, 110.0, 0.2, 11.0, 1.3],  # extreme overheat
+            [4.0, 40.0, 0.2, 11.5, 1.4],  # current spike
+        ]
+    )
+    _, fault_flags = anomaly_predict(params, fault_samples)
+    _, normal_flags = anomaly_predict(params, X[:500])
+    fault_flagged = fault_flags.mean()
+    normal_ok = 1.0 - normal_flags.mean()
+
+    print(f"\nAnomaly Detector — fault detection rate: {fault_flagged:.2%}")
+    print(f"Anomaly Detector — normal pass rate: {normal_ok:.2%}")
+    joblib.dump(params, MODEL_DIR / "anomaly_detector.joblib")
+    print("Saved anomaly_detector.joblib")
+    return {"anomaly_fault_detection": fault_flagged, "anomaly_normal_pass": normal_ok}
+
+
 if __name__ == "__main__":
     print("=== Existing models (motor health + dirt level) ===")
     print("Generating dataset...")
@@ -299,6 +389,10 @@ if __name__ == "__main__":
     print("Health state distribution:\n", df_hw4["health_state"].value_counts())
     results.update(train_and_save_hw4(df_hw4))
 
+    print("\n=== Anomaly detector (unsupervised, Mahalanobis distance) ===")
+    df_normal = generate_normal_operation_dataset(n=4000)
+    results.update(train_and_save_anomaly(df_normal))
+
     print("\nAll training complete:", results)
     # Fail if classification accuracy or RUL R² below target
     if results.get("health_state_accuracy", 0) < 0.80:
@@ -306,5 +400,8 @@ if __name__ == "__main__":
         sys.exit(1)
     if results.get("rul_r2", 0) < 0.80:
         print("WARNING: RUL R2 below 0.80")
+        sys.exit(1)
+    if results.get("anomaly_fault_detection", 0) < 0.99:
+        print("WARNING: anomaly detector missed known fault signatures")
         sys.exit(1)
     print("All models meet performance targets.")

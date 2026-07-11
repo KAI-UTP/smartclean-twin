@@ -9,6 +9,12 @@ Existing:
 HW4 (new):
   health_state_clf  — NORMAL / WARNING / CRITICAL  (classification)
   rul_regressor     — predicted_rul_minutes         (regression)
+
+Anomaly (new):
+  anomaly_detector  — statistical model learned unsupervised from normal
+                      operation only: per-sensor mean/std; a sample is
+                      anomalous when any sensor deviates > 4.5 sigma
+                      (flags fault injections and sensor faults)
 """
 
 from __future__ import annotations
@@ -27,11 +33,12 @@ _motor_clf = None
 _dirt_clf = None
 _health_state_clf = None
 _rul_regressor = None
+_anomaly_detector = None
 _loaded = False
 
 
 def load_models() -> bool:
-    global _motor_clf, _dirt_clf, _health_state_clf, _rul_regressor, _loaded
+    global _motor_clf, _dirt_clf, _health_state_clf, _rul_regressor, _anomaly_detector, _loaded
     try:
         import joblib
 
@@ -39,19 +46,20 @@ def load_models() -> bool:
         dirt_path = MODEL_DIR / "dirt_level_clf.joblib"
         health_path = MODEL_DIR / "health_state_clf.joblib"
         rul_path = MODEL_DIR / "rul_regressor.joblib"
+        anomaly_path = MODEL_DIR / "anomaly_detector.joblib"
+        all_paths = [motor_path, dirt_path, health_path, rul_path, anomaly_path]
 
-        if all(p.exists() for p in [motor_path, dirt_path, health_path, rul_path]):
+        if all(p.exists() for p in all_paths):
             _motor_clf = joblib.load(motor_path)
             _dirt_clf = joblib.load(dirt_path)
             _health_state_clf = joblib.load(health_path)
             _rul_regressor = joblib.load(rul_path)
+            _anomaly_detector = joblib.load(anomaly_path)
             _loaded = True
-            logger.info("All 4 AI models loaded from %s", MODEL_DIR)
+            logger.info("All 5 AI models loaded from %s", MODEL_DIR)
             return True
         else:
-            missing = [
-                p.name for p in [motor_path, dirt_path, health_path, rul_path] if not p.exists()
-            ]
+            missing = [p.name for p in all_paths if not p.exists()]
             logger.warning("Missing model files %s — using rule-based fallback", missing)
             return False
     except Exception as exc:
@@ -147,6 +155,14 @@ def predict(
         health_conf = float(np.max(_health_state_clf.predict_proba(hw4_vec)[0]))
         rul_minutes = float(np.clip(_rul_regressor.predict(hw4_vec)[0], 0, 200))
 
+        # Anomaly detection: score = threshold - max |z|; < 0 = anomaly
+        anomaly_vec = np.array(
+            [[motor_current_a, motor_temperature_c, speed_mps, battery_v, battery_a]]
+        )
+        z = np.abs((anomaly_vec - _anomaly_detector["mean"]) / _anomaly_detector["std"])
+        anomaly_score = float(_anomaly_detector["threshold"] - z.max())
+        is_anomaly = anomaly_score < 0
+
         return {
             "motor_health_prediction": motor_pred,
             "motor_health_confidence": round(motor_conf, 4),
@@ -155,6 +171,8 @@ def predict(
             "health_state_prediction": health_pred,
             "health_state_confidence": round(health_conf, 4),
             "predicted_rul_minutes": round(rul_minutes, 1),
+            "anomaly_score": round(anomaly_score, 4),
+            "is_anomaly": is_anomaly,
             "model_used": "random_forest",
         }
     else:
@@ -186,6 +204,10 @@ def predict(
         # Fallback RUL from battery_soc
         rul_minutes = round(battery_soc * 1.2, 1)
 
+        # Fallback anomaly: simple threshold rules
+        is_anomaly = motor_current_a > 3.0 or motor_temperature_c > 80
+        anomaly_score = -0.1 if is_anomaly else 0.1
+
         return {
             "motor_health_prediction": motor_pred,
             "motor_health_confidence": 1.0,
@@ -194,5 +216,7 @@ def predict(
             "health_state_prediction": health_pred,
             "health_state_confidence": 1.0,
             "predicted_rul_minutes": rul_minutes,
+            "anomaly_score": anomaly_score,
+            "is_anomaly": is_anomaly,
             "model_used": "rule_fallback",
         }
