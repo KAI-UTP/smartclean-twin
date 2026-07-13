@@ -1,7 +1,9 @@
 # Dashboard & Visualization Review — Emelin
 
 **Reviewer:** Nurin Emelin binti Marhisyam 24006706
+
 **Date:** 12 July 2026
+
 **Reviewed:** Grafana dashboard (http://localhost:3001/d/smartclean-main) — 28 panels, 7 sections
 
 ## 1. Section Walkthrough
@@ -27,8 +29,9 @@
 ## 3. Evidence Collection
 
 Confirmed. The required screenshots have been captured, organised into `docs/evidence/`, and the following files were added to the repository:
-- `normal_state.png`
-- `fault_state.png`
+- `dashboard_normal.png`
+- `fault_injection.png`
+- `dashboard_clear.png`
 
 ## 4. Usability Suggestions
 
