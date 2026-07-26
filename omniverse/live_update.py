@@ -108,14 +108,16 @@ def _query_latest(measurement, fields):
         f' |> filter(fn: (r) => r._measurement == "{measurement}")'
         f" |> filter(fn: (r) => {flt})"
         f" |> last()"
+        f" |> group()"  # merge per-field tables so pivot yields ONE row with all fields
         f' |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")'
-        f" |> limit(n: 1)"
     )
     tables = _query_api.query(flux)
+    # Merge all returned rows — guarantees every requested field is collected
+    merged: dict = {}
     for table in tables:
         for record in table.records:
-            return record.values
-    return {}
+            merged.update({k: v for k, v in record.values.items() if v is not None})
+    return merged
 
 
 # ---------------------------------------------------------------------------
