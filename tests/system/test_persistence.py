@@ -11,6 +11,7 @@ What this test proves (for rubric: Project Deployment — Skilled level):
 
 import subprocess
 import time
+from datetime import datetime, timedelta, timezone
 
 import pytest
 import requests
@@ -25,10 +26,24 @@ HEADERS = {
 }
 
 
-def _query_count(measurement: str, minutes: int = 60) -> int:
+def _fixed_window(minutes: int = 60) -> tuple[str, str]:
+    """A frozen [start, stop] window ending now.
+
+    Both the before-restart and after-restart counts must use the SAME
+    fixed window: a sliding range like -60m would silently drop the oldest
+    seconds of data while the restart runs, looking like data loss.
+    """
+    stop = datetime.now(timezone.utc)
+    start = stop - timedelta(minutes=minutes)
+    fmt = "%Y-%m-%dT%H:%M:%SZ"
+    return start.strftime(fmt), stop.strftime(fmt)
+
+
+def _query_count(measurement: str, window: tuple[str, str]) -> int:
+    start, stop = window
     flux = (
         f'from(bucket: "{INFLUX_BUCKET}")'
-        f" |> range(start: -{minutes}m)"
+        f" |> range(start: {start}, stop: {stop})"
         f' |> filter(fn: (r) => r._measurement == "{measurement}")'
         " |> count()"
         " |> sum()"
@@ -86,7 +101,8 @@ def test_data_persists_after_influxdb_restart(require_docker):
     """
     assert _influxdb_healthy(), "InfluxDB not reachable before restart — check Docker stack"
 
-    count_before = _query_count("robot_telemetry", minutes=60)
+    window = _fixed_window(minutes=60)
+    count_before = _query_count("robot_telemetry", window)
     assert count_before > 0, (
         "No robot_telemetry data found before restart. "
         "Ensure the Docker stack has been running for at least 1 minute."
@@ -115,7 +131,7 @@ def test_data_persists_after_influxdb_restart(require_docker):
     # Extra buffer for the write API to reinitialise
     time.sleep(2)
 
-    count_after = _query_count("robot_telemetry", minutes=60)
+    count_after = _query_count("robot_telemetry", window)
     print(f"[AFTER RESTART] robot_telemetry row count: {count_after}")
 
     assert count_after >= count_before, (
@@ -132,7 +148,8 @@ def test_state_data_persists_after_influxdb_restart(require_docker):
     """Verify robot_state measurement also survives restart (written by state engine)."""
     assert _influxdb_healthy(), "InfluxDB not reachable"
 
-    count_before = _query_count("robot_state", minutes=60)
+    window = _fixed_window(minutes=60)
+    count_before = _query_count("robot_state", window)
     assert count_before > 0, "No robot_state data — ensure state engine has been running"
     print(f"\n[BEFORE] robot_state count: {count_before}")
 
@@ -144,7 +161,7 @@ def test_state_data_persists_after_influxdb_restart(require_docker):
             break
     time.sleep(2)
 
-    count_after = _query_count("robot_state", minutes=60)
+    count_after = _query_count("robot_state", window)
     print(f"[AFTER] robot_state count: {count_after}")
 
     assert count_after >= count_before, f"robot_state data loss: {count_before} → {count_after}"
@@ -155,7 +172,8 @@ def test_prediction_data_persists_after_influxdb_restart(require_docker):
     """Verify robot_prediction measurement (written by AI service) survives restart."""
     assert _influxdb_healthy(), "InfluxDB not reachable"
 
-    count_before = _query_count("robot_prediction", minutes=60)
+    window = _fixed_window(minutes=60)
+    count_before = _query_count("robot_prediction", window)
     assert count_before > 0, "No robot_prediction data — ensure AI service has been running"
     print(f"\n[BEFORE] robot_prediction count: {count_before}")
 
@@ -167,7 +185,7 @@ def test_prediction_data_persists_after_influxdb_restart(require_docker):
             break
     time.sleep(2)
 
-    count_after = _query_count("robot_prediction", minutes=60)
+    count_after = _query_count("robot_prediction", window)
     print(f"[AFTER] robot_prediction count: {count_after}")
 
     assert (

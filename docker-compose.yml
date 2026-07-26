@@ -98,7 +98,8 @@ services:
       context: .
       dockerfile: services/telemetry-ingestion/Dockerfile
     ports:
-      - "8001:8001"
+      # host port range so replicas can scale: instance 1 -> 8001, instance 2 -> 8011, ...
+      - "8001-8011:8001"
     environment:
       <<: *common-env
       TELEMETRY_INGESTION_PORT: "8001"
