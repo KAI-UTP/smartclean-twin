@@ -45,8 +45,8 @@ End-to-end telemetry flows from Robot Simulator to validated MQTT topic, Digital
 | T-11 | Write integration tests for ingestion and command API | Chan Li Kai | Done |
 | T-12 | Create Dockerfiles for all 5 custom services | Chan Li Kai | Done |
 | T-13 | Create docker-compose.yml with all services | Chan Li Kai | Done |
-| T-14 | Review MQTT topics and telemetry contract | William Wong | Assigned |
-| T-15 | Review state rules and test cases | Irvin Chang | Assigned |
+| T-14 | Review MQTT topics and telemetry contract | William Wong | Done — `docs/review-william.md` |
+| T-15 | Review state rules and test cases | Irvin Chang | Done — `docs/review-irvin.md` |
 
 ### Acceptance Criteria
 - [x] Simulator publishes telemetry every 1 second
@@ -85,11 +85,11 @@ AI predictions flow into Grafana, data persists after InfluxDB restart, CI pipel
 | T-24 | Create GitHub Actions CI workflow | Chan Li Kai | Done |
 | T-25 | Write smoke test and demo data scripts | Chan Li Kai | Done |
 | T-26 | Write all documentation (architecture, sprint plan, demo script) | Chan Li Kai | Done |
-| T-27 | Review Grafana panels and dashboard requirements | Liang Yan Ee | Assigned |
+| T-27 | Review Grafana panels and dashboard requirements | Liang Yan Ee | Done — `docs/review-liang.md` |
 | T-31 | NVIDIA Omniverse 3D scene (create_scene.py + live_update.py + fault_demo.py) | Chan Li Kai | Done |
-| T-28 | Review command flow and ack latency | Liang Yan Ee | Assigned |
-| T-29 | Organize sprint evidence and meeting records | Nurin Emelin | Assigned |
-| T-30 | Final demonstration preparation | All | Assigned |
+| T-28 | Review command flow and ack latency | Liang Yan Ee | Done — `docs/review-liang.md` |
+| T-29 | Organize sprint evidence and meeting records | Nurin Emelin | Done — `docs/review-nurin.md` + `docs/evidence/` |
+| T-30 | Final demonstration preparation | All | Done — presentation video + `docs/presentation-script.md` |
 
 ### Acceptance Criteria
 - [ ] AI model achieves ≥ 80% accuracy on held-out test set
