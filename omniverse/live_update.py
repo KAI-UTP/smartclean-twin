@@ -108,6 +108,8 @@ def _query_latest(measurement, fields):
         f' |> filter(fn: (r) => r._measurement == "{measurement}")'
         f" |> filter(fn: (r) => {flt})"
         f" |> last()"
+        # cast to string so mixed float/string fields can share one pivot table
+        f" |> map(fn: (r) => ({{r with _value: string(v: r._value)}}))"
         f" |> group()"  # merge per-field tables so pivot yields ONE row with all fields
         f' |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")'
     )
