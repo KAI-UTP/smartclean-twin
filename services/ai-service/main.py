@@ -96,14 +96,14 @@ def _build_recommendation(result: dict, minutes_to_empty: float | None) -> str:
     if result["health_state_prediction"] == "CRITICAL":
         return "STOP robot and inspect motor immediately"
     if result["is_anomaly"]:
-        return "Sensor anomaly detected — verify sensors and inspect robot"
+        return "Sensor anomaly detected: verify sensors and inspect robot"
     if minutes_to_empty is not None and minutes_to_empty < 10:
-        return "Battery low — return to dock within 10 minutes"
+        return "Battery low: return to dock within 10 minutes"
     if result["health_state_prediction"] == "WARNING":
-        return "Schedule maintenance soon — monitor temperature and load"
+        return "Schedule maintenance soon: monitor temperature and load"
     if result["motor_health_prediction"] in ("OVERHEATED", "FAULT"):
-        return "Motor issue detected — reduce load or stop for cooling"
-    return "Normal operation — no action needed"
+        return "Motor issue detected: reduce load or stop for cooling"
+    return "Normal operation, no action needed"
 
 
 def _get_write_api():

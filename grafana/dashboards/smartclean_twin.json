@@ -271,12 +271,12 @@
               "type": "value",
               "options": {
                 "0": {
-                  "text": "NO \u2014 sensors normal",
+                  "text": "NO: sensors normal",
                   "color": "green",
                   "index": 0
                 },
                 "1": {
-                  "text": "YES \u2014 abnormal pattern",
+                  "text": "YES: abnormal pattern",
                   "color": "red",
                   "index": 1
                 }
@@ -1236,7 +1236,7 @@
     },
     {
       "id": 15,
-      "title": "Mean Motor Current \u2014 30s Window (A)",
+      "title": "Mean Motor Current, 30s Window (A)",
       "type": "timeseries",
       "gridPos": {
         "h": 6,
@@ -1282,7 +1282,7 @@
     },
     {
       "id": 16,
-      "title": "Max Motor Temperature \u2014 30s Window (C)",
+      "title": "Max Motor Temperature, 30s Window (C)",
       "type": "timeseries",
       "gridPos": {
         "h": 6,
@@ -1328,7 +1328,7 @@
     },
     {
       "id": 17,
-      "title": "Mean Battery SoC \u2014 1m Window (%)",
+      "title": "Mean Battery SoC, 1m Window (%)",
       "type": "timeseries",
       "gridPos": {
         "h": 6,
