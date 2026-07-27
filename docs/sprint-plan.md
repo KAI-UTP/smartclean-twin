@@ -1,7 +1,7 @@
 # SmartClean Twin — Sprint Plan
 
 **Project:** SmartClean Twin — RBB2013 Digital Twin May 2026  
-**Duration:** 2 Sprints (Sprint 1: 1–11 July 2026 | Sprint 2: 12–19 July 2026)  
+**Duration:** 2 Sprints (Sprint 1: 1-11 July 2026 | Sprint 2: 12-27 July 2026)  
 **Main developer:** Chan Li Kai (22010900)
 
 ---
@@ -65,7 +65,7 @@ End-to-end telemetry flows from Robot Simulator to validated MQTT topic, Digital
 
 ---
 
-## Sprint 2 (12–19 July 2026): AI, Persistence, Visualization, CI/CD
+## Sprint 2 (12-27 July 2026): AI, Persistence, Visualization, CI/CD
 
 ### Sprint Goal
 AI predictions flow into Grafana, data persists after InfluxDB restart, CI pipeline runs on push, and the system is ready for final demonstration.
