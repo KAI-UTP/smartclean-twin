@@ -38,8 +38,22 @@ if errorlevel 1 (
 )
 timeout /t 8 /nobreak >nul
 
-echo [2/3] Checking the console is up...
-curl -s -o nul -w "      local check: HTTP %%{http_code}\n" http://localhost:8005/health
+echo [2/3] Checking the console is up and the password is actually enforced...
+curl -s -o nul -w "      health check: HTTP %%{http_code}\n" http://localhost:8005/health
+
+for /f %%C in ('curl -s -o nul -w "%%{http_code}" http://localhost:8005/api/state') do set GATE=%%C
+if not "%GATE%"=="401" (
+    echo.
+    echo  ABORTED. The console answered HTTP %GATE% without a password, so the
+    echo  gate is not active. Opening a tunnel now would put robot controls on
+    echo  the public internet with no authentication.
+    echo.
+    echo  Fix: make sure docker compose picked up CONSOLE_PASSWORD, then re-run.
+    echo.
+    pause
+    exit /b 1
+)
+echo       password gate confirmed active (unauthenticated request got 401)
 
 echo [3/3] Opening the tunnel. Look for the trycloudflare.com address below.
 echo.
