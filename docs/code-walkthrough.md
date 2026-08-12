@@ -131,7 +131,7 @@ Do not scroll through whole files. Open at the named function or line.
 | # | File | Lines | What it is | Point at |
 |---|---|---|---|---|
 | 60 | `docker-compose.yml` | 177 | **The whole system in one file.** 8 services, health checks, ordered start-up, named volumes | `depends_on: condition: service_healthy`: services wait until dependencies can actually serve |
-| 61 | " | " | " | `ports: "8001-8011:8001"` on ingestion: a **port range**, which is what allows scaling to 2 replicas |
+| 61 | " | " | " | `ports: "8101-8111:8001"` on ingestion: a **port range**, which is what allows scaling to 2 replicas. The range deliberately sits clear of the other services' fixed ports, since Docker allocates from it blindly |
 | 62 | " | " | " | The named volumes: `influxdb_data` is why data survives container restarts |
 | 63 | `.github/workflows/ci.yml` | 129 | **CI/CD pipeline**, 5 jobs with a dependency graph | The `train-ai-model` job: model quality is a build gate |
 | 64 | " | " | " | Pinned `ruff==0.15.20 black==26.5.1`: we pinned these after unpinned versions broke the build for the whole team |

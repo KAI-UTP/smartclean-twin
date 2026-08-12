@@ -68,7 +68,7 @@ docker compose up --scale telemetry-ingestion=2 -d
 docker compose ps telemetry-ingestion
 
 # Expected output:
-# smartclean-twin-telemetry-ingestion-1   Up   0.0.0.0:8009->8001/tcp   (host port varies)
+# smartclean-twin-telemetry-ingestion-1   Up   0.0.0.0:8101->8001/tcp   (host port varies in 8101-8111)
 # smartclean-twin-telemetry-ingestion-2   Up
 
 # Scale back to 1

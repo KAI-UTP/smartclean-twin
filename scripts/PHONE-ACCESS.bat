@@ -36,7 +36,7 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
-timeout /t 8 /nobreak >nul
+timeout /t 8 /nobreak >nul 2>&1 || ping -n 9 127.0.0.1 >nul
 
 echo [2/3] Checking the console is up and the password is actually enforced...
 curl -s -o nul -w "      health check: HTTP %%{http_code}\n" http://localhost:8005/health

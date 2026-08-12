@@ -440,7 +440,7 @@ other service port needs to be exposed publicly.
 | InfluxDB | 8086 | 8086 | HTTP |
 | Grafana | 3000 | 3000 | HTTP |
 | Command API | 8000 | 8000 | HTTP |
-| Telemetry Ingestion | 8001-8011 | 8001 | HTTP |
+| Telemetry Ingestion | 8101-8111 | 8001 | HTTP |
 | State Engine | 8002 | 8002 | HTTP |
 | AI Service | 8003 | 8003 | HTTP |
 | Robot Simulator | 8004 | 8004 | HTTP |

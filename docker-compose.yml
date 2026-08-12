@@ -98,8 +98,11 @@ services:
       context: .
       dockerfile: services/telemetry-ingestion/Dockerfile
     ports:
-      # host port range so replicas can scale: instance 1 -> 8001, instance 2 -> 8011, ...
-      - "8001-8011:8001"
+      # A host port range lets replicas scale without clashing. The range must
+      # not overlap the fixed ports of the other services (8000, 8002, 8003,
+      # 8004, 8005): Docker allocates from it blindly and would otherwise steal
+      # a port another service needs, leaving that service unpublished.
+      - "8101-8111:8001"
     environment:
       <<: *common-env
       TELEMETRY_INGESTION_PORT: "8001"

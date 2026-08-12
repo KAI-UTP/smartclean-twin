@@ -24,7 +24,7 @@ echo [1/3] Closing Docker Desktop...
 taskkill /f /im "Docker Desktop.exe"  >nul 2>&1
 taskkill /f /im "com.docker.backend.exe" >nul 2>&1
 taskkill /f /im "com.docker.build.exe"   >nul 2>&1
-timeout /t 6 /nobreak >nul
+timeout /t 6 /nobreak >nul 2>&1 || ping -n 7 127.0.0.1 >nul
 
 echo [2/3] Moving stale socket folders aside...
 set "STAMP=%RANDOM%"
@@ -43,7 +43,7 @@ echo       Waiting for the engine...
 
 set /a TRIES=0
 :wait
-timeout /t 5 /nobreak >nul
+timeout /t 5 /nobreak >nul 2>&1 || ping -n 6 127.0.0.1 >nul
 docker info >nul 2>&1
 if not errorlevel 1 goto ready
 set /a TRIES+=1

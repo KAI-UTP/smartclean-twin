@@ -15,49 +15,56 @@ echo ============================================================
 echo.
 
 REM ---------------------------------------------------------------- 1. Docker
+REM The wait loop must stay at top level. Inside a parenthesised block cmd
+REM expands %TRIES% once when it parses the block, before the counter is set,
+REM which makes the comparison a syntax error.
 docker info >nul 2>&1
-if errorlevel 1 (
-    echo [1/6] Docker is not running. Starting Docker Desktop...
-    start "" "C:\Program Files\Docker\Docker\Docker Desktop.exe"
-    echo       Waiting for the Docker engine, this can take up to 2 minutes.
-    set /a TRIES=0
-    :waitdocker
-    timeout /t 5 /nobreak >nul
-    docker info >nul 2>&1
-    if not errorlevel 1 goto dockerready
-    set /a TRIES+=1
-    if %TRIES% GEQ 36 (
-        echo.
-        echo       Docker did not start. If you saw an "Inference manager" or
-        echo       "Secrets Engine" error, close Docker Desktop and run:
-        echo         FIX-DOCKER.bat
-        echo.
-        pause
-        exit /b 1
-    )
-    goto waitdocker
-    :dockerready
-    echo       Docker engine is ready.
-) else (
-    echo [1/6] Docker is already running.
-)
+if not errorlevel 1 goto dockerready
+
+echo [1/6] Docker is not running. Starting Docker Desktop...
+start "" "C:\Program Files\Docker\Docker\Docker Desktop.exe"
+echo       Waiting for the Docker engine, this can take up to 3 minutes.
+set /a TRIES=0
+
+:waitdocker
+timeout /t 5 /nobreak >nul 2>&1 || ping -n 6 127.0.0.1 >nul
+docker info >nul 2>&1
+if not errorlevel 1 goto dockerstarted
+set /a TRIES+=1
+if %TRIES% LSS 36 goto waitdocker
+
+echo.
+echo       Docker did not start. If you saw an "Inference manager" or a
+echo       "Secrets Engine" error, close Docker Desktop and run FIX-DOCKER.bat
+echo.
+pause
+exit /b 1
+
+:dockerstarted
+echo       Docker engine is ready.
+goto dockerdone
+
+:dockerready
+echo [1/6] Docker is already running.
+
+:dockerdone
 
 REM ------------------------------------------------------------ 2. Containers
 echo [2/6] Starting the 9 SmartClean Twin containers...
 cd /d "%REPO%"
 docker compose up -d
 echo       Waiting 20 seconds for the services to become healthy...
-timeout /t 20 /nobreak >nul
+timeout /t 20 /nobreak >nul 2>&1 || ping -n 21 127.0.0.1 >nul
 
 REM ------------------------------------------------------- 3. Control panel
 echo [3/6] Opening the operator control panel...
 start "" "http://localhost:8005"
-timeout /t 2 /nobreak >nul
+timeout /t 2 /nobreak >nul 2>&1 || ping -n 3 127.0.0.1 >nul
 
 REM ----------------------------------------------------------- 4. Grafana
 echo [4/6] Opening the Grafana dashboard...
 start "" "http://localhost:3001/d/smartclean-main"
-timeout /t 2 /nobreak >nul
+timeout /t 2 /nobreak >nul 2>&1 || ping -n 3 127.0.0.1 >nul
 
 REM --------------------------------------------------- 5. Walkthrough PDF
 echo [5/6] Opening the project walkthrough PDF...
@@ -66,7 +73,7 @@ if exist "%WALKPDF%" (
 ) else (
     echo       Not found. Run MAKE-PDFS.bat first to generate it.
 )
-timeout /t 2 /nobreak >nul
+timeout /t 2 /nobreak >nul 2>&1 || ping -n 3 127.0.0.1 >nul
 
 REM ---------------------------------------------------------- 6. Omniverse
 echo [6/6] Launching NVIDIA Omniverse with the 3D scene...

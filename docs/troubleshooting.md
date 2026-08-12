@@ -15,7 +15,7 @@ Common causes:
 
 1. Check simulator is running: `curl http://localhost:8004/health`
 2. Check MQTT: `mosquitto_sub -h localhost -t "smartclean/SCR01/telemetry/raw" -C 1`
-3. Check ingestion. Its host port is allocated dynamically so replicas can
+3. Check ingestion. Its host port is allocated dynamically from 8101-8111 so replicas can
    scale, so look it up first:
    `docker compose port telemetry-ingestion 8001`
    then `curl http://localhost:<that port>/health` and look at the `received` counter
