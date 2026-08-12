@@ -167,6 +167,31 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # ── Web Control Panel ─────────────────────────────────────────────────────────
+  # Operator console. Serves the single-page UI and proxies its requests to the
+  # other services, so the browser only ever talks to this one origin.
+  web-control:
+    build:
+      context: .
+      dockerfile: services/web-control/Dockerfile
+    container_name: smartclean-web-control
+    ports:
+      - "8005:8005"
+    environment:
+      WEB_CONTROL_PORT: "8005"
+      ROBOT_ID: ${ROBOT_ID:-SCR01}
+      COMMAND_API_URL: http://command-api:8000
+      SIMULATOR_URL: http://robot-simulator:8004
+      AI_SERVICE_URL: http://ai-service:8003
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN:-smartclean-super-secret-token}
+      INFLUXDB_ORG: ${INFLUXDB_ORG:-smartclean}
+      INFLUXDB_BUCKET: ${INFLUXDB_BUCKET:-smartclean_twin}
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   mosquitto_data:
   influxdb_data:

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SmartClean Twin: Operator Console</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1>SmartClean Twin</h1>
+    <span class="sub">Operator Console &middot; robot <b id="robotId">SCR01</b></span>
+  </div>
+  <div class="link-row">
+    <span id="conn" class="pill pill-grey">connecting</span>
+    <a href="http://localhost:3001/d/smartclean-main" target="_blank" rel="noopener">Grafana dashboard</a>
+  </div>
+</header>
+
+<main>
+
+  <!-- Status strip -->
+  <section class="strip">
+    <div class="tile" id="tileSafety">
+      <span class="label">Safety state</span>
+      <span class="value" id="safetyState">--</span>
+    </div>
+    <div class="tile" id="tileMission">
+      <span class="label">Mission state</span>
+      <span class="value" id="missionState">--</span>
+    </div>
+    <div class="tile" id="tileHealth">
+      <span class="label">AI health state</span>
+      <span class="value" id="healthState">--</span>
+    </div>
+    <div class="tile" id="tileAnomaly">
+      <span class="label">Anomaly</span>
+      <span class="value" id="anomaly">--</span>
+    </div>
+    <div class="tile wide" id="tileRec">
+      <span class="label">AI recommendation</span>
+      <span class="value small" id="recommendation">--</span>
+    </div>
+  </section>
+
+  <div class="grid">
+
+    <!-- Live map -->
+    <section class="card">
+      <h2>Live position</h2>
+      <canvas id="map" width="360" height="360"></canvas>
+      <div class="readout">
+        <span>x <b id="posX">--</b> m</span>
+        <span>y <b id="posY">--</b> m</span>
+        <span>heading <b id="heading">--</b>&deg;</span>
+        <span>speed <b id="speed">--</b> m/s</span>
+      </div>
+    </section>
+
+    <!-- Control -->
+    <section class="card">
+      <h2>Control</h2>
+      <p class="hint">Each command travels REST &rarr; MQTT &rarr; robot, and the
+        robot's acknowledgement is shown below.</p>
+
+      <div class="btn-group">
+        <button class="btn go"    data-cmd="START">Start</button>
+        <button class="btn warn"  data-cmd="PAUSE">Pause</button>
+        <button class="btn go"    data-cmd="RESUME">Resume</button>
+        <button class="btn stop"  data-cmd="STOP">Stop</button>
+        <button class="btn"       data-cmd="RETURN_HOME">Return home</button>
+      </div>
+
+      <h3>Actuators</h3>
+      <div class="btn-group">
+        <button class="btn small" data-cmd="BRUSH_ON">Brush on</button>
+        <button class="btn small" data-cmd="BRUSH_OFF">Brush off</button>
+        <button class="btn small" data-cmd="PUMP_ON">Pump on</button>
+        <button class="btn small" data-cmd="PUMP_OFF">Pump off</button>
+      </div>
+
+      <div id="ackBox" class="ack">Awaiting a command.</div>
+    </section>
+
+    <!-- Telemetry -->
+    <section class="card">
+      <h2>Telemetry</h2>
+      <div class="meter">
+        <div class="meter-head"><span>Battery</span><b id="socTxt">--</b></div>
+        <div class="bar"><div class="fill" id="socBar"></div></div>
+      </div>
+      <div class="meter">
+        <div class="meter-head"><span>Cleaning coverage</span><b id="covTxt">--</b></div>
+        <div class="bar"><div class="fill cov" id="covBar"></div></div>
+      </div>
+      <div class="meter">
+        <div class="meter-head"><span>Water level</span><b id="waterTxt">--</b></div>
+        <div class="bar"><div class="fill water" id="waterBar"></div></div>
+      </div>
+      <table class="kv">
+        <tr><td>Motor temperature</td><td><b id="motorTemp">--</b> &deg;C</td></tr>
+        <tr><td>Motor current</td><td><b id="motorCurr">--</b> A</td></tr>
+        <tr><td>Obstacle distance</td><td><b id="obstacle">--</b> cm</td></tr>
+        <tr><td>Predicted useful life</td><td><b id="rul">--</b> min</td></tr>
+        <tr><td>Minutes to empty</td><td><b id="toEmpty">--</b></td></tr>
+        <tr><td>Minutes to finish</td><td><b id="toFinish">--</b></td></tr>
+      </table>
+    </section>
+
+    <!-- What-if -->
+    <section class="card">
+      <h2>What-if simulation</h2>
+      <p class="hint">Ask the twin what it would conclude for hypothetical sensor
+        values. The real robot is not affected.</p>
+      <label>Motor temperature <output id="oTemp">90</output> &deg;C
+        <input type="range" id="wTemp" min="20" max="115" value="90"></label>
+      <label>Motor current <output id="oCurr">3.6</output> A
+        <input type="range" id="wCurr" min="0" max="5" step="0.1" value="3.6"></label>
+      <label>Battery state of charge <output id="oSoc">40</output> %
+        <input type="range" id="wSoc" min="0" max="100" value="40"></label>
+      <label>Water level <output id="oWater">60</output> %
+        <input type="range" id="wWater" min="0" max="100" value="60"></label>
+      <button class="btn go" id="runWhatIf">Run scenario</button>
+      <div id="whatifBox" class="ack">No scenario run yet.</div>
+    </section>
+
+    <!-- Fault injection -->
+    <section class="card">
+      <h2>Fault injection <span class="tag">demonstration</span></h2>
+      <p class="hint">Forces a fault in the simulated robot so the twin's
+        reaction can be observed here, in Grafana and in the 3D scene.</p>
+      <div class="btn-group">
+        <button class="btn stop"  data-fault="obstacle">Obstacle</button>
+        <button class="btn warn"  data-fault="motor">Motor overload</button>
+        <button class="btn warn"  data-fault="battery">Low battery</button>
+        <button class="btn go"    data-fault="clear">Clear all</button>
+      </div>
+      <div id="faultBox" class="ack">No fault injected.</div>
+    </section>
+
+    <!-- Command history -->
+    <section class="card">
+      <h2>Command history</h2>
+      <table class="hist">
+        <thead><tr><th>Command</th><th>Status</th><th>ACK</th></tr></thead>
+        <tbody id="histBody"><tr><td colspan="3" class="muted">No commands yet.</td></tr></tbody>
+      </table>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  SmartClean Twin &middot; RBB2013 Digital Twin &middot; the console proxies every
+  request through this service, so the browser talks to one origin only
+</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

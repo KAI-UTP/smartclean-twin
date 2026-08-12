@@ -407,6 +407,31 @@ Each microservice exposes a REST health endpoint:
 
 ---
 
+
+## 17. Operator Browser to Web Control Panel
+
+| Field | Value |
+|---|---|
+| Route | `GET /`, `GET /static/*`, `GET /api/state`, `POST /api/command`, `POST /api/fault`, `POST /api/whatif`, `GET /api/history` |
+| Port / protocol | 8005 / HTTP |
+| Data format | HTML and static assets on `/`; JSON on all `/api/*` routes |
+| Initiated | When the operator opens `http://localhost:8005`; `/api/state` is polled once per second thereafter |
+| Concluded | When the browser tab is closed |
+
+## 18. Web Control Panel to Backend Services
+
+The console never calls another service directly from the browser. Every
+request is proxied server side, so the browser talks to one origin only and no
+other service port needs to be exposed publicly.
+
+| Field | Value |
+|---|---|
+| Routes | `command-api:8000/api/v1/commands`, `robot-simulator:8004/fault`, `ai-service:8003/whatif`, `influxdb:8086/api/v2/query` |
+| Port / protocol | 8000, 8004, 8003, 8086 / HTTP over the compose network |
+| Data format | JSON, except the InfluxDB query which sends Flux and receives CSV |
+| Initiated | On each corresponding browser request, or once per second for the state poll |
+| Concluded | On the upstream service's HTTP response, or on timeout |
+
 ## Port Summary
 
 | Service | Internal Port | External Port | Protocol |
