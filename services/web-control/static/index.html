@@ -97,16 +97,49 @@
       </div>
 
       <div class="dpad" id="dpad">
-        <button class="dbtn up"    data-move="MOVE_UP"    disabled title="Arrow Up">&#9650;</button>
-        <button class="dbtn left"  data-move="MOVE_LEFT"  disabled title="Arrow Left">&#9664;</button>
+        <button class="dbtn ul" data-move="MOVE_UP_LEFT"    disabled title="Up left">&#8598;</button>
+        <button class="dbtn up" data-move="MOVE_UP"         disabled title="Arrow Up">&#9650;</button>
+        <button class="dbtn ur" data-move="MOVE_UP_RIGHT"   disabled title="Up right">&#8599;</button>
+        <button class="dbtn le" data-move="MOVE_LEFT"       disabled title="Arrow Left">&#9664;</button>
         <div class="dcentre" id="dCentre">manual<br>off</div>
-        <button class="dbtn right" data-move="MOVE_RIGHT" disabled title="Arrow Right">&#9654;</button>
-        <button class="dbtn down"  data-move="MOVE_DOWN"  disabled title="Arrow Down">&#9660;</button>
+        <button class="dbtn ri" data-move="MOVE_RIGHT"      disabled title="Arrow Right">&#9654;</button>
+        <button class="dbtn dl" data-move="MOVE_DOWN_LEFT"  disabled title="Down left">&#8601;</button>
+        <button class="dbtn dn" data-move="MOVE_DOWN"       disabled title="Arrow Down">&#9660;</button>
+        <button class="dbtn dr" data-move="MOVE_DOWN_RIGHT" disabled title="Down right">&#8600;</button>
       </div>
 
-      <p class="hint centre">Keyboard arrow keys work too, once manual control
-        is enabled.</p>
+      <p class="hint centre">Eight directions. Hold a button to keep moving.
+        Arrow keys work on a keyboard.</p>
       <div id="moveBox" class="ack">Manual control is off.</div>
+    </section>
+
+    <!-- Quick actions -->
+    <section class="card">
+      <h2>Quick actions</h2>
+      <p class="hint">One press issues a short sequence of commands. Every
+        acknowledgement is reported, so a partial failure is visible.</p>
+      <div class="btn-group stack">
+        <button class="btn go   wide" data-macro="wet_clean">Start wet clean
+          <small>START, brush on, pump on</small></button>
+        <button class="btn      wide" data-macro="dry_sweep">Start dry sweep
+          <small>START, brush on, pump off</small></button>
+        <button class="btn      wide" data-macro="actuators_off">Actuators off
+          <small>brush off, pump off</small></button>
+        <button class="btn warn wide" data-macro="park">Park at dock
+          <small>actuators off, return home</small></button>
+        <button class="btn stop wide" data-macro="emergency_stop">Emergency stop
+          <small>STOP, brush off, pump off</small></button>
+      </div>
+      <div id="macroBox" class="ack">No quick action run yet.</div>
+    </section>
+
+    <!-- Phone access -->
+    <section class="card">
+      <h2>Open on your phone</h2>
+      <p class="hint">The console works on a phone or tablet on the same
+        network. Type this address into the phone's browser.</p>
+      <div class="lanurl" id="lanUrl">checking ...</div>
+      <p class="hint" id="lanHint"></p>
     </section>
 
     <!-- Telemetry -->

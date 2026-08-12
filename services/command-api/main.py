@@ -192,6 +192,10 @@ def issue_command(req: CommandRequest) -> CommandResponse:
         RobotCommand.MOVE_DOWN,
         RobotCommand.MOVE_LEFT,
         RobotCommand.MOVE_RIGHT,
+        RobotCommand.MOVE_UP_LEFT,
+        RobotCommand.MOVE_UP_RIGHT,
+        RobotCommand.MOVE_DOWN_LEFT,
+        RobotCommand.MOVE_DOWN_RIGHT,
     }
     topic = Topics.COMMAND_MOTION if req.command in motion_commands else Topics.COMMAND_CLEANING
 

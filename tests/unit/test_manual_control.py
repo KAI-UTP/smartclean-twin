@@ -167,3 +167,55 @@ def test_manual_mode_does_not_follow_the_cleaning_path(sim: RobotSimulator) -> N
 
     assert (sim.state.row, sim.state.col) == position_before, "robot must not drive itself"
     assert sim.state.path_index == index_before
+
+
+# ── diagonal movement ─────────────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    "command, d_row, d_col, heading",
+    [
+        ("MOVE_UP_RIGHT", 1, 1, 45.0),
+        ("MOVE_DOWN_RIGHT", -1, 1, 135.0),
+        ("MOVE_DOWN_LEFT", -1, -1, 225.0),
+        ("MOVE_UP_LEFT", 1, -1, 315.0),
+    ],
+)
+def test_each_diagonal_moves_one_cell_on_both_axes(
+    sim: RobotSimulator, command: str, d_row: int, d_col: int, heading: float
+) -> None:
+    sim._apply_command("MANUAL_MODE")
+    _place(sim, 4, 2)
+    start_row, start_col = sim.state.row, sim.state.col
+
+    assert sim._apply_command(command) is True
+    assert sim.state.row == start_row + d_row
+    assert sim.state.col == start_col + d_col
+    assert sim.state.heading_deg == heading
+
+
+def test_a_diagonal_may_not_cut_a_corner(sim: RobotSimulator) -> None:
+    """Both orthogonal neighbours must be clear, or the chassis would not fit."""
+    # From (1,3): up-right target (2,4) is floor-adjacent but (2,4) is a desk.
+    assert not gm.is_accessible(2, 4)
+    sim._apply_command("MANUAL_MODE")
+    _place(sim, 1, 3)
+
+    assert sim._apply_command("MOVE_UP_RIGHT") is False
+    assert (sim.state.row, sim.state.col) == (1, 3)
+
+
+def test_a_diagonal_into_the_wall_is_refused(sim: RobotSimulator) -> None:
+    sim._apply_command("MANUAL_MODE")
+    _place(sim, 1, 1)  # corner cell, down-left is the perimeter
+
+    assert sim._apply_command("MOVE_DOWN_LEFT") is False
+    assert (sim.state.row, sim.state.col) == (1, 1)
+
+
+def test_all_eight_directions_are_defined(sim: RobotSimulator) -> None:
+    import simulator as simmod
+
+    assert len(simmod.MANUAL_MOVES) == 8
+    headings = sorted(h for _, _, h in simmod.MANUAL_MOVES.values())
+    assert headings == [0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0]

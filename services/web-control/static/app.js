@@ -286,9 +286,85 @@ async function move(cmd, btn) {
 $("btnManual").addEventListener("click", () => setMode("MANUAL_MODE"));
 $("btnAuto").addEventListener("click", () => setMode("AUTO_MODE"));
 
+/* Press and hold to keep moving. One step immediately, then repeats while the
+   button stays held. Pointer events cover mouse, touch and pen with one path. */
+const HOLD_DELAY_MS = 420;   // wait before the first repeat
+const HOLD_REPEAT_MS = 260;  // gap between repeats
+let holdTimer = null;
+let repeatTimer = null;
+
+function stopHold() {
+  clearTimeout(holdTimer);
+  clearInterval(repeatTimer);
+  holdTimer = repeatTimer = null;
+}
+
 document.querySelectorAll(".dbtn").forEach((b) => {
-  b.addEventListener("click", () => move(b.dataset.move, b));
+  b.addEventListener("pointerdown", (e) => {
+    if (b.disabled) return;
+    e.preventDefault();
+    move(b.dataset.move, b);
+    holdTimer = setTimeout(() => {
+      repeatTimer = setInterval(() => {
+        if (b.disabled) return stopHold();
+        move(b.dataset.move, b);
+      }, HOLD_REPEAT_MS);
+    }, HOLD_DELAY_MS);
+  });
+  ["pointerup", "pointerleave", "pointercancel"].forEach((ev) =>
+    b.addEventListener(ev, stopHold)
+  );
 });
+window.addEventListener("blur", stopHold);
+
+/* ------------------------------------------------------- quick actions */
+
+document.querySelectorAll("[data-macro]").forEach((b) => {
+  b.addEventListener("click", async () => {
+    const box = $("macroBox");
+    const buttons = document.querySelectorAll("[data-macro]");
+    buttons.forEach((x) => (x.disabled = true));
+    const d = await post("/api/macro", { macro: b.dataset.macro }, box,
+                         "Running " + b.dataset.macro);
+    buttons.forEach((x) => (x.disabled = false));
+    if (!d) return;
+
+    const allOk = d.accepted === d.total;
+    box.className = "ack " + (allOk ? "ok" : "bad");
+    box.textContent =
+      `${d.macro}: ${d.accepted} of ${d.total} commands accepted\n` +
+      d.results
+        .map((r) => {
+          const ok = r.result.ack_received && r.result.ack_accepted;
+          return `  ${r.command.padEnd(12)} ${ok ? "accepted" : "not accepted"}`;
+        })
+        .join("\n");
+    loadHistory();
+  });
+});
+
+/* ------------------------------------------------------- phone access */
+
+async function showLanUrl() {
+  try {
+    const r = await fetch("/api/access");
+    const d = await r.json();
+    if (d.lan_url) {
+      $("lanUrl").textContent = d.lan_url;
+      $("lanHint").textContent = d.viewing_locally
+        ? "Make sure the phone is on the same WiFi as this laptop."
+        : "You are already viewing the console from this address.";
+    } else {
+      $("lanUrl").textContent = "http://<this laptop's IP>:" + d.port;
+      $("lanHint").textContent =
+        "Find the address with ipconfig on the laptop, then use the IPv4 " +
+        "address of your WiFi adapter. The phone must be on the same network.";
+    }
+  } catch (e) {
+    $("lanUrl").textContent = "unavailable";
+  }
+}
+showLanUrl();
 
 /* Arrow keys drive the robot once manual control is on. */
 const KEY_TO_MOVE = {

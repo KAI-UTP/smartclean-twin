@@ -100,6 +100,10 @@ class RobotCommand(str, Enum):
     MOVE_DOWN = "MOVE_DOWN"
     MOVE_LEFT = "MOVE_LEFT"
     MOVE_RIGHT = "MOVE_RIGHT"
+    MOVE_UP_LEFT = "MOVE_UP_LEFT"
+    MOVE_UP_RIGHT = "MOVE_UP_RIGHT"
+    MOVE_DOWN_LEFT = "MOVE_DOWN_LEFT"
+    MOVE_DOWN_RIGHT = "MOVE_DOWN_RIGHT"
 
 
 # ── Telemetry sub-models ──────────────────────────────────────────────────────

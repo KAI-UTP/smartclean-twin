@@ -42,6 +42,20 @@ WATER_THRESHOLD = 15.0  # % tank, auto-return home below this
 WATER_FULL = 90.0  # % tank, resume cleaning above this
 REFILL_RATE = 25.0  # % per minute refill rate at the dock
 
+# Manual teleoperation steps, as (delta row, delta column, heading in degrees).
+# Grid convention: x_m = col * CELL_SIZE_M, y_m = row * CELL_SIZE_M, and the
+# heading matches the autonomous path, atan2(d_col, d_row) in degrees.
+MANUAL_MOVES = {
+    "MOVE_UP": (1, 0, 0.0),  # +row, north
+    "MOVE_UP_RIGHT": (1, 1, 45.0),
+    "MOVE_RIGHT": (0, 1, 90.0),  # +col, east
+    "MOVE_DOWN_RIGHT": (-1, 1, 135.0),
+    "MOVE_DOWN": (-1, 0, 180.0),  # -row, south
+    "MOVE_DOWN_LEFT": (-1, -1, 225.0),
+    "MOVE_LEFT": (0, -1, 270.0),  # -col, west
+    "MOVE_UP_LEFT": (1, -1, 315.0),
+}
+
 
 class RobotSimulator:
     def __init__(self) -> None:
@@ -123,7 +137,7 @@ class RobotSimulator:
                 s.manual_mode = False
                 s.mode = "CLEANING"
                 logger.info("Autonomous control restored")
-            elif command in ("MOVE_UP", "MOVE_DOWN", "MOVE_LEFT", "MOVE_RIGHT"):
+            elif command in MANUAL_MOVES:
                 if not s.manual_mode:
                     logger.warning("%s rejected: robot is not in manual mode", command)
                     return False
@@ -140,18 +154,21 @@ class RobotSimulator:
         driving cannot put the robot somewhere the physical robot could not go.
         Must be called with the state lock already held.
         """
-        # Grid convention: x_m = col * CELL_SIZE_M, y_m = row * CELL_SIZE_M.
-        # Heading matches the autonomous path: atan2(d_col, d_row) in degrees.
-        moves = {
-            "MOVE_UP": (1, 0, 0.0),  # +row, north
-            "MOVE_RIGHT": (0, 1, 90.0),  # +col, east
-            "MOVE_DOWN": (-1, 0, 180.0),  # -row, south
-            "MOVE_LEFT": (0, -1, 270.0),  # -col, west
-        }
-        d_row, d_col, heading = moves[command]
+        d_row, d_col, heading = MANUAL_MOVES[command]
         new_row, new_col = s.row + d_row, s.col + d_col
 
-        if not gm.is_accessible(new_row, new_col):
+        blocked = not gm.is_accessible(new_row, new_col)
+
+        # A diagonal step must not cut a corner between two obstacles: both
+        # orthogonal neighbours have to be clear as well, otherwise the robot
+        # would squeeze through a gap its chassis could not fit.
+        if not blocked and d_row != 0 and d_col != 0:
+            if not gm.is_accessible(s.row + d_row, s.col) or not gm.is_accessible(
+                s.row, s.col + d_col
+            ):
+                blocked = True
+
+        if blocked:
             s.heading_deg = heading  # turn to face the obstruction, but do not move
             s.speed_mps = 0.0
             s.obstacle_cm = 20.0

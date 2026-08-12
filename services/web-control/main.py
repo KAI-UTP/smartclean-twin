@@ -26,7 +26,7 @@ from typing import Any
 
 import httpx
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -140,6 +140,21 @@ VALID_COMMANDS = {
     "MOVE_DOWN",
     "MOVE_LEFT",
     "MOVE_RIGHT",
+    "MOVE_UP_LEFT",
+    "MOVE_UP_RIGHT",
+    "MOVE_DOWN_LEFT",
+    "MOVE_DOWN_RIGHT",
+}
+
+# Named sequences of commands, so a common operator action is one button press
+# instead of three. The sequence is issued server side and every acknowledgement
+# is returned, so a partial failure is visible rather than hidden.
+MACROS: dict[str, list[str]] = {
+    "wet_clean": ["START", "BRUSH_ON", "PUMP_ON"],
+    "dry_sweep": ["START", "BRUSH_ON", "PUMP_OFF"],
+    "actuators_off": ["BRUSH_OFF", "PUMP_OFF"],
+    "park": ["BRUSH_OFF", "PUMP_OFF", "RETURN_HOME"],
+    "emergency_stop": ["STOP", "BRUSH_OFF", "PUMP_OFF"],
 }
 
 
@@ -160,6 +175,65 @@ async def send_command(req: CommandRequest) -> dict:
     if resp.status_code >= 400:
         raise HTTPException(status_code=resp.status_code, detail=resp.text)
     return resp.json()
+
+
+class MacroRequest(BaseModel):
+    macro: str
+
+
+async def _issue(client: httpx.AsyncClient, command: str) -> dict:
+    resp = await client.post(
+        f"{COMMAND_API}/api/v1/commands",
+        json={"robot_id": ROBOT_ID, "command": command},
+        timeout=15.0,
+    )
+    return resp.json()
+
+
+@app.post("/api/macro")
+async def run_macro(req: MacroRequest) -> dict:
+    """Run a named command sequence and return every acknowledgement."""
+    if req.macro not in MACROS:
+        raise HTTPException(status_code=400, detail=f"Unknown macro: {req.macro}")
+    results = []
+    async with httpx.AsyncClient() as client:
+        for command in MACROS[req.macro]:
+            try:
+                results.append({"command": command, "result": await _issue(client, command)})
+            except httpx.HTTPError as exc:
+                raise HTTPException(status_code=502, detail=f"Command API unreachable: {exc}")
+    accepted = sum(1 for r in results if r["result"].get("ack_accepted"))
+    return {
+        "macro": req.macro,
+        "commands": MACROS[req.macro],
+        "accepted": accepted,
+        "total": len(results),
+        "results": results,
+    }
+
+
+@app.get("/api/access")
+def access(request: Request) -> dict:
+    """The address to open this console from a phone on the same network.
+
+    The service runs inside a container, so it cannot see the host's LAN
+    address itself. LAN_HOST is supplied by the launcher; failing that, the
+    address the browser used is reported back, which is already correct when
+    the console was opened from another device.
+    """
+    port = int(os.environ.get("WEB_CONTROL_PORT", "8005"))
+    host = os.environ.get("LAN_HOST", "").strip()
+    browser_host = (request.headers.get("host") or "").split(":")[0]
+    is_local = browser_host in ("localhost", "127.0.0.1", "")
+
+    if not host and not is_local:
+        host = browser_host
+
+    return {
+        "lan_url": f"http://{host}:{port}" if host else "",
+        "port": port,
+        "viewing_locally": is_local,
+    }
 
 
 class FaultRequest(BaseModel):

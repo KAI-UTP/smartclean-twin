@@ -167,10 +167,15 @@ table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 
 .dpad {
   display: grid; gap: 7px; justify-content: center; margin: 18px auto 6px;
-  grid-template-columns: repeat(3, 62px);
-  grid-template-rows: repeat(3, 62px);
-  grid-template-areas: ". up ." "left centre right" ". down .";
+  grid-template-columns: repeat(3, 68px);
+  grid-template-rows: repeat(3, 68px);
+  grid-template-areas: "ul up ur" "le centre ri" "dl dn dr";
+  touch-action: manipulation;   /* no double-tap zoom while driving */
 }
+.dbtn.ul { grid-area: ul; } .dbtn.ur { grid-area: ur; }
+.dbtn.dl { grid-area: dl; } .dbtn.dr { grid-area: dr; }
+.dbtn.le { grid-area: le; } .dbtn.ri { grid-area: ri; }
+.dbtn.dn { grid-area: dn; }
 .dbtn {
   background: #24303d; color: var(--txt);
   border: 1px solid var(--line); border-radius: 12px;
@@ -202,7 +207,59 @@ label {
 label output { color: var(--cy); font-weight: 700; }
 input[type=range] { width: 100%; accent-color: var(--cy); margin-top: 5px; }
 
+/* quick action buttons */
+.btn-group.stack { flex-direction: column; }
+.btn.wide { width: 100%; text-align: left; padding: 11px 15px; }
+.btn.wide small {
+  display: block; font-weight: 400; font-size: 11.5px;
+  opacity: .75; margin-top: 2px; letter-spacing: .2px;
+}
+
+/* phone access */
+.lanurl {
+  font-family: Consolas, monospace; font-size: 19px; font-weight: 700;
+  color: var(--cy); background: #101922; border: 1px solid var(--cy);
+  border-radius: 10px; padding: 14px; text-align: center;
+  word-break: break-all; user-select: all;
+}
+
 footer {
   padding: 18px 26px; border-top: 1px solid var(--line);
   color: #5b6b7d; font-size: 12.5px;
+}
+
+/* ── phones and small tablets ────────────────────────────────────────────── */
+@media (max-width: 700px) {
+  header { padding: 12px 14px; }
+  header h1 { font-size: 19px; }
+  .sub { font-size: 12px; }
+  main { padding: 14px 12px 28px; }
+
+  .strip { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tile.wide { grid-column: span 2; }
+  .tile .value { font-size: 19px; }
+  .tile .value.small { font-size: 13.5px; }
+
+  .grid { grid-template-columns: 1fr; gap: 14px; }
+  .card { padding: 14px 15px; }
+
+  /* bigger touch targets */
+  .btn { padding: 13px 16px; font-size: 15px; }
+  .btn.small { padding: 11px 14px; font-size: 14px; }
+  .dpad {
+    grid-template-columns: repeat(3, 84px);
+    grid-template-rows: repeat(3, 84px);
+    gap: 9px;
+  }
+  .dbtn { font-size: 26px; }
+
+  canvas { max-width: 100%; }
+  .lanurl { font-size: 16px; }
+  footer { padding: 14px; font-size: 11.5px; }
+}
+
+/* keep the whole page from bouncing while driving on a touch screen */
+@media (pointer: coarse) {
+  body { overscroll-behavior-y: contain; }
+  .btn, .dbtn { touch-action: manipulation; }
 }

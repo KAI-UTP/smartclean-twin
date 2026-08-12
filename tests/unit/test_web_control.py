@@ -161,3 +161,54 @@ def test_parser_converts_numbers_and_keeps_strings() -> None:
 def test_parser_returns_nothing_for_an_empty_response() -> None:
     out = asyncio.run(web._query_latest(_FakeClient(""), "robot_telemetry"))
     assert out == {}
+
+
+# ── quick action macros ───────────────────────────────────────────────────────
+
+
+def test_unknown_macro_is_rejected() -> None:
+    r = client.post("/api/macro", json={"macro": "make_coffee"})
+    assert r.status_code == 400
+
+
+@pytest.mark.parametrize(
+    "macro", ["wet_clean", "dry_sweep", "actuators_off", "park", "emergency_stop"]
+)
+def test_every_macro_is_defined(macro: str) -> None:
+    assert macro in web.MACROS
+    assert len(web.MACROS[macro]) >= 2, "a macro should issue more than one command"
+
+
+def test_macros_only_use_commands_the_robot_accepts() -> None:
+    for macro, commands in web.MACROS.items():
+        for command in commands:
+            assert command in web.VALID_COMMANDS, f"{macro} uses unknown command {command}"
+
+
+def test_emergency_stop_stops_before_it_disables_the_actuators() -> None:
+    """Stopping first is what makes it an emergency stop."""
+    assert web.MACROS["emergency_stop"][0] == "STOP"
+
+
+# ── phone access ──────────────────────────────────────────────────────────────
+
+
+def test_access_flags_local_viewing_when_opened_on_the_laptop() -> None:
+    r = client.get("/api/access", headers={"Host": "localhost:8005"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["port"] == 8005
+    assert body["viewing_locally"] is True
+
+
+def test_access_reports_the_lan_address_when_opened_from_a_phone() -> None:
+    """A phone reaches the console by IP, so that IP is the address to show."""
+    r = client.get("/api/access", headers={"Host": "192.168.1.42:8005"})
+    body = r.json()
+    assert body["viewing_locally"] is False
+    assert body["lan_url"] == "http://192.168.1.42:8005"
+
+
+def test_all_eight_directions_are_offered_by_the_console() -> None:
+    moves = {c for c in web.VALID_COMMANDS if c.startswith("MOVE_")}
+    assert len(moves) == 8
