@@ -20,7 +20,29 @@ skip_without_stack = pytest.mark.skipif(
 )
 
 BASE_URL_CMD = "http://localhost:8000"
-BASE_URL_INGESTION = "http://localhost:8001"
+
+
+def _ingestion_base_url() -> str:
+    """Telemetry Ingestion's host port is allocated from a range so replicas can
+    be scaled, so it is not fixed at 8001. Ask compose which port it got."""
+    import subprocess
+
+    try:
+        out = subprocess.run(
+            ["docker", "compose", "port", "telemetry-ingestion", "8001"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        ).stdout.strip()
+        port = out.rsplit(":", 1)[-1]
+        if port.isdigit():
+            return f"http://localhost:{port}"
+    except Exception:
+        pass
+    return "http://localhost:8001"
+
+
+BASE_URL_INGESTION = _ingestion_base_url()
 BASE_URL_STATE = "http://localhost:8002"
 BASE_URL_AI = "http://localhost:8003"
 BASE_URL_SIM = "http://localhost:8004"

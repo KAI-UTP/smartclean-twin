@@ -369,7 +369,7 @@ Each microservice exposes a REST health endpoint:
 | Service | Port | Route | Response |
 |---------|------|-------|----------|
 | Command API | 8000 | `GET /health` | `{"status": "healthy", ...}` |
-| Telemetry Ingestion | 8001 | `GET /health` | `{"status": "healthy", ...}` |
+| Telemetry Ingestion | dynamic | `GET /health` | `{"status": "healthy", ...}` |
 | State Engine | 8002 | `GET /health` | `{"status": "healthy", "messages_processed": N}` |
 | AI Service | 8003 | `GET /health` | `{"status": "healthy", "predictions_made": N}` |
 | Robot Simulator | 8004 | `GET /health` | `{"status": "healthy", "battery_soc": X}` |
@@ -440,7 +440,7 @@ other service port needs to be exposed publicly.
 | InfluxDB | 8086 | 8086 | HTTP |
 | Grafana | 3000 | 3000 | HTTP |
 | Command API | 8000 | 8000 | HTTP |
-| Telemetry Ingestion | 8001 | 8001 | HTTP |
+| Telemetry Ingestion | 8001-8011 | 8001 | HTTP |
 | State Engine | 8002 | 8002 | HTTP |
 | AI Service | 8003 | 8003 | HTTP |
 | Robot Simulator | 8004 | 8004 | HTTP |

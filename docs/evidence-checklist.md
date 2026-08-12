@@ -80,14 +80,14 @@ This checklist documents what evidence must be collected for submission.
 
 ## Deployment (5%)
 
-- [ ] `docker compose ps` showing all 8 containers running
+- [ ] `docker compose ps` showing all 9 containers running
 - [ ] `docker compose up --build` log excerpt
-- [ ] Health endpoint responses from all 5 custom services
+- [ ] Health endpoint responses from all 6 custom services
 - [ ] `docker compose up --scale telemetry-ingestion=2` output
 - [ ] persistence_test.py output showing `[PASS]`
 - [ ] Evidence of service auto-recovery (stop a container, it restarts)
 - [ ] Interface contract table in docs/architecture.md
-- [ ] Dockerfile for each of the 5 custom services
+- [ ] Dockerfile for each of the 6 custom services
 
 ---
 

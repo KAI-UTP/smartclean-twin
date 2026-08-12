@@ -26,7 +26,7 @@ Build time: ~3–5 minutes (AI model trains during `ai-service` Docker build).
 ## Verify
 
 ```bash
-docker compose ps          # all 8 containers should show "Up"
+docker compose ps          # all 9 containers should show "Up"
 python scripts/smoke_test.py  # all [OK]
 ```
 
@@ -68,7 +68,7 @@ docker compose up --scale telemetry-ingestion=2 -d
 docker compose ps telemetry-ingestion
 
 # Expected output:
-# smartclean-twin-telemetry-ingestion-1   Up   0.0.0.0:8001->8001/tcp
+# smartclean-twin-telemetry-ingestion-1   Up   0.0.0.0:8009->8001/tcp   (host port varies)
 # smartclean-twin-telemetry-ingestion-2   Up
 
 # Scale back to 1

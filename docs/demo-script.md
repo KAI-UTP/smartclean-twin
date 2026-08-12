@@ -25,7 +25,7 @@ ls smartclean-twin/
 ls services/
 ```
 
-**Narrate:** "The repository contains 5 custom microservices under `services/`, shared Pydantic models under `shared/`, Docker Compose, contracts, tests, scripts and docs."
+**Narrate:** "The repository contains 6 custom microservices under `services/`, shared Pydantic models under `shared/`, Docker Compose, contracts, tests, scripts and docs."
 
 ---
 
@@ -51,7 +51,7 @@ docker compose up --build -d
 docker compose ps
 ```
 
-**Expected:** All 8 containers showing status `Up`.
+**Expected:** All 9 containers showing status `Up`.
 
 ---
 
@@ -61,7 +61,7 @@ docker compose ps
 python scripts/smoke_test.py
 ```
 
-**Expected:** `[OK]` for all 5 custom services.
+**Expected:** `[OK]` for all 6 custom services.
 
 ---
 
@@ -87,7 +87,7 @@ mosquitto_sub -h localhost -t "smartclean/SCR01/telemetry/validated" -C 2
 **Narrate:** "The Telemetry Ingestion Service validates the schema and re-publishes to the validated topic. Invalid messages are rejected and counted."
 
 ```bash
-curl http://localhost:8001/health
+curl http://localhost:$(docker compose port telemetry-ingestion 8001 | cut -d: -f2)/health
 ```
 
 Show `valid_rate_pct` ≥ 98%.

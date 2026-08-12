@@ -82,9 +82,19 @@ def main() -> int:
 
         print(f"...   {name}: exporting to HTML")
         r = subprocess.run(
-            [sys.executable, "-m", "jupyter", "nbconvert", "--to", "html",
-             "--output-dir", tmp, ipynb],
-            capture_output=True, text=True,
+            [
+                sys.executable,
+                "-m",
+                "jupyter",
+                "nbconvert",
+                "--to",
+                "html",
+                "--output-dir",
+                tmp,
+                ipynb,
+            ],
+            capture_output=True,
+            text=True,
         )
         html = os.path.join(tmp, name + ".html")
         if not os.path.exists(html):
@@ -100,10 +110,16 @@ def main() -> int:
 
         pdf_tmp = os.path.join(tmp, name + ".pdf")
         subprocess.run(
-            [browser, "--headless", "--disable-gpu", "--no-pdf-header-footer",
-             f"--print-to-pdf={pdf_tmp}",
-             "file:" + urllib.request.pathname2url(html)],
-            capture_output=True, timeout=300,
+            [
+                browser,
+                "--headless",
+                "--disable-gpu",
+                "--no-pdf-header-footer",
+                f"--print-to-pdf={pdf_tmp}",
+                "file:" + urllib.request.pathname2url(html),
+            ],
+            capture_output=True,
+            timeout=300,
         )
         if not os.path.exists(pdf_tmp):
             print(f"FAIL  {name}: Chrome did not produce a PDF")

@@ -63,7 +63,7 @@ Omniverse, PowerShell terminal, GitHub page.
 **[SCREEN: PowerShell terminal]**
 **[TYPE: `docker compose ps`]**
 
-> "The system is partitioned into eight containers — one per microservice,
+> "The system is partitioned into nine containers — one per microservice,
 > deployed with a single command: docker compose up. Here you can see all
 > eight running: simulator, MQTT broker, ingestion, state engine, AI service,
 > command API, InfluxDB and Grafana.
@@ -194,7 +194,7 @@ curl.exe --% -X POST http://localhost:8004/fault -H "Content-Type: application/j
 
 > "To summarise: a complete digital twin — real-time monitoring, five AI
 > models, operator recommendations, what-if simulation, 3D visualization,
-> eight containerized microservices, tested and deployed with CI/CD.
+> nine containerized microservices, tested and deployed with CI/CD.
 > The limitations are documented: the robot is simulated and the security is
 > not production-grade — both have clear upgrade paths.
 > Thank you for watching."
@@ -202,7 +202,7 @@ curl.exe --% -X POST http://localhost:8004/fault -H "Content-Type: application/j
 ---
 
 ## Pre-recording checklist
-- [ ] START-SMARTCLEAN-TWIN.bat run, all 8 containers up
+- [ ] START-SMARTCLEAN-TWIN.bat run, all 9 containers up
 - [ ] Omniverse live update running (robot moving, tiles turning green)
 - [ ] Grafana logged in, dashboard open, all panels showing data
 - [ ] Jupyter open on project_walkthrough.ipynb (outputs visible)

@@ -426,44 +426,53 @@ class RobotSimulator:
     # ── Telemetry publisher ───────────────────────────────────────────────────
 
     def _build_telemetry(self) -> dict:
+        """Snapshot the robot state as one telemetry message.
+
+        The whole message is built under the state lock. The physics thread and
+        the MQTT command thread both mutate this state, so without the lock a
+        message could carry a position from before a command and a heading from
+        after it. A Digital Twin's telemetry has to be a coherent snapshot of
+        one instant, not a mix of two.
+        """
         s = self._state
-        coverage = len(self._cleaned) / gm.total_accessible_cells() * 100.0
-        return {
-            "schema_version": "1.0",
-            "robot_id": ROBOT_ID,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "sequence": s.sequence,
-            "pose": {
-                "x_m": round(s.x_m, 3),
-                "y_m": round(s.y_m, 3),
-                "heading_deg": round(s.heading_deg, 1),
-                "speed_mps": round(s.speed_mps, 3),
-            },
-            "sensors": {
-                "obstacle_cm": round(s.obstacle_cm, 1),
-                "battery_v": round(s.battery_v, 3),
-                "battery_soc": round(s.battery_soc, 2),
-                "battery_a": round(s.battery_a, 3),
-                "motor_current_a": round(s.motor_current_a, 3),
-                "motor_temperature_c": round(s.motor_temperature_c, 2),
-                "dirt_score": round(s.dirt_score, 4),
-                "water_level_pct": round(s.water_level_pct, 2),
-                "bumper_active": s.bumper_active,
-            },
-            "actuators": {
-                "brush_on": s.brush_on,
-                "pump_on": s.pump_on,
-            },
-            "mission": {
-                "mission_id": s.mission_id,
-                "mode": s.mode,
-            },
-            "_meta": {
-                "cleaning_coverage_pct": round(coverage, 2),
-                "cleaned_cells": len(self._cleaned),
-                "total_accessible": gm.total_accessible_cells(),
-            },
-        }
+        with s.lock():
+            coverage = len(self._cleaned) / gm.total_accessible_cells() * 100.0
+            return {
+                "schema_version": "1.0",
+                "robot_id": ROBOT_ID,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "sequence": s.sequence,
+                "pose": {
+                    "x_m": round(s.x_m, 3),
+                    "y_m": round(s.y_m, 3),
+                    "heading_deg": round(s.heading_deg, 1),
+                    "speed_mps": round(s.speed_mps, 3),
+                },
+                "sensors": {
+                    "obstacle_cm": round(s.obstacle_cm, 1),
+                    "battery_v": round(s.battery_v, 3),
+                    "battery_soc": round(s.battery_soc, 2),
+                    "battery_a": round(s.battery_a, 3),
+                    "motor_current_a": round(s.motor_current_a, 3),
+                    "motor_temperature_c": round(s.motor_temperature_c, 2),
+                    "dirt_score": round(s.dirt_score, 4),
+                    "water_level_pct": round(s.water_level_pct, 2),
+                    "bumper_active": s.bumper_active,
+                },
+                "actuators": {
+                    "brush_on": s.brush_on,
+                    "pump_on": s.pump_on,
+                },
+                "mission": {
+                    "mission_id": s.mission_id,
+                    "mode": s.mode,
+                },
+                "_meta": {
+                    "cleaning_coverage_pct": round(coverage, 2),
+                    "cleaned_cells": len(self._cleaned),
+                    "total_accessible": gm.total_accessible_cells(),
+                },
+            }
 
     # ── Main loop ─────────────────────────────────────────────────────────────
 

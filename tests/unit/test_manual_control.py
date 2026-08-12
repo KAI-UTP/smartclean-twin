@@ -278,3 +278,43 @@ def test_nearest_index_prefers_a_cell_that_still_needs_cleaning(
     index = sim._nearest_path_index(target[0], target[1])
 
     assert sim._path[index] not in sim._cleaned or len(sim._cleaned) == len(sim._path)
+
+
+# ── telemetry consistency ─────────────────────────────────────────────────────
+
+
+def test_building_telemetry_does_not_deadlock(sim: RobotSimulator) -> None:
+    """It takes the state lock, so it must not be called while already held."""
+    msg = sim._build_telemetry()
+    assert msg["robot_id"]
+    assert "pose" in msg and "sensors" in msg
+
+
+def test_telemetry_is_a_coherent_snapshot_under_concurrent_commands(
+    sim: RobotSimulator,
+) -> None:
+    """Commands from the MQTT thread must not tear a telemetry message."""
+    import threading
+
+    sim._apply_command("MANUAL_MODE")
+    _place(sim, 4, 2)
+    stop = threading.Event()
+
+    def drive() -> None:
+        while not stop.is_set():
+            sim._apply_command("MOVE_RIGHT")
+            sim._apply_command("MOVE_LEFT")
+
+    driver = threading.Thread(target=drive, daemon=True)
+    driver.start()
+    try:
+        for _ in range(200):
+            msg = sim._build_telemetry()
+            x, y = msg["pose"]["x_m"], msg["pose"]["y_m"]
+            # The robot only ever occupies a real grid cell, so a torn read
+            # would show a coordinate that is not a multiple of the cell size.
+            assert abs((x / gm.CELL_SIZE_M) - round(x / gm.CELL_SIZE_M)) < 1e-9
+            assert abs((y / gm.CELL_SIZE_M) - round(y / gm.CELL_SIZE_M)) < 1e-9
+    finally:
+        stop.set()
+        driver.join(timeout=2)

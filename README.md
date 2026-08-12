@@ -54,7 +54,7 @@ Robot Simulator (8004)
     │  MQTT telemetry → smartclean/SCR01/telemetry/raw
     ▼
 Eclipse Mosquitto (1883)
-    ├──► Telemetry Ingestion (8001)  ──► InfluxDB (8086)
+    ├──► Telemetry Ingestion (host port dynamic)  ──► InfluxDB (8086)
     │        │ validated telemetry
     │        ├──► State Engine (8002) ──► InfluxDB + MQTT state/alert
     │        └──► AI Service (8003)   ──► InfluxDB + MQTT prediction
@@ -76,7 +76,7 @@ See [docs/architecture.md](docs/architecture.md) for the full interface contract
 |---------|------|-----------|
 | Robot Simulator | 8004 | Python + Paho MQTT |
 | Eclipse Mosquitto | 1883 | MQTT broker |
-| Telemetry Ingestion | 8001 | FastAPI + Paho |
+| Telemetry Ingestion | dynamic, 8001-8011 | FastAPI + Paho |
 | Digital Twin State Engine | 8002 | FastAPI + Paho |
 | AI / Behaviour Service | 8003 | FastAPI + scikit-learn |
 | Command API | 8000 | FastAPI |

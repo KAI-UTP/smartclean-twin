@@ -1,17 +1,35 @@
 #!/usr/bin/env python3
 """Smoke test — checks all service health endpoints are responding."""
 
+import subprocess
 import sys
-import time
 import requests
 
 SERVICES = {
-    "Command API":          "http://localhost:8000/health",
-    "Telemetry Ingestion":  "http://localhost:8001/health",
-    "State Engine":         "http://localhost:8002/health",
-    "AI Service":           "http://localhost:8003/health",
-    "Robot Simulator":      "http://localhost:8004/health",
+    "Command API": "http://localhost:8000/health",
+    "State Engine": "http://localhost:8002/health",
+    "AI Service": "http://localhost:8003/health",
+    "Robot Simulator": "http://localhost:8004/health",
 }
+
+
+def _ingestion_url() -> str:
+    """Telemetry Ingestion publishes on a host port allocated from a range, so
+    that replicas can be scaled. Ask compose which port it actually got."""
+    try:
+        out = subprocess.run(
+            ["docker", "compose", "port", "telemetry-ingestion", "8001"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        ).stdout.strip()
+        port = out.rsplit(":", 1)[-1]
+        if port.isdigit():
+            return f"http://localhost:{port}/health"
+    except Exception:
+        pass
+    return ""
+
 
 GRAFANA = "http://localhost:3000/api/health"
 INFLUXDB = "http://localhost:8086/health"
@@ -30,12 +48,19 @@ def check(name: str, url: str, timeout: int = 5) -> bool:
         return False
 
 
+def _with_ingestion(services: dict) -> dict:
+    url = _ingestion_url()
+    if url:
+        services = {**services, "Telemetry Ingestion": url}
+    return services
+
+
 def main() -> int:
     print("\nSmartClean Twin — Smoke Test")
     print("=" * 40)
     failures = 0
 
-    for name, url in SERVICES.items():
+    for name, url in _with_ingestion(SERVICES).items():
         if not check(name, url):
             failures += 1
 

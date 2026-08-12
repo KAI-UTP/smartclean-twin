@@ -15,7 +15,10 @@ Common causes:
 
 1. Check simulator is running: `curl http://localhost:8004/health`
 2. Check MQTT: `mosquitto_sub -h localhost -t "smartclean/SCR01/telemetry/raw" -C 1`
-3. Check ingestion: `curl http://localhost:8001/health` — look at `received` counter
+3. Check ingestion. Its host port is allocated dynamically so replicas can
+   scale, so look it up first:
+   `docker compose port telemetry-ingestion 8001`
+   then `curl http://localhost:<that port>/health` and look at the `received` counter
 4. Check InfluxDB: open http://localhost:8086, Data Explorer, bucket `smartclean_twin`
 
 ## Command API returns 503

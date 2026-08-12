@@ -40,7 +40,7 @@ def query_count() -> int:
         print(f"Query failed: {r.status_code} {r.text[:200]}")
         return -1
     # Parse CSV response
-    lines = [l for l in r.text.strip().splitlines() if l and not l.startswith("#")]
+    lines = [ln for ln in r.text.strip().splitlines() if ln and not ln.startswith("#")]
     if len(lines) < 2:
         return 0
     # Last column of last data row is the count
@@ -82,8 +82,7 @@ def main() -> int:
     # Step 2: Restart InfluxDB container
     print("Step 2: Restarting InfluxDB container...")
     result = subprocess.run(
-        ["docker", "compose", "restart", "influxdb"],
-        capture_output=True, text=True
+        ["docker", "compose", "restart", "influxdb"], capture_output=True, text=True
     )
     if result.returncode != 0:
         print(f"  FAIL: docker compose restart failed: {result.stderr}")
