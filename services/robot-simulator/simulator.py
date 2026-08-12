@@ -33,9 +33,14 @@ SEED = int(os.environ.get("SIMULATOR_SEED", "42"))
 MQTT_HOST = os.environ.get("MQTT_HOST", "mosquitto")
 MQTT_PORT = int(os.environ.get("MQTT_PORT", "1883"))
 TICKS_TO_CLEAN = 3  # ticks the robot must stay in a cell to clean it
-CHARGE_THRESHOLD = 20.0  # % SoC — auto-return home below this
-CHARGE_FULL = 80.0  # % SoC — resume cleaning above this
-CHARGE_RATE = 10.0  # % per minute charge rate at home station
+CHARGE_THRESHOLD = 20.0  # % SoC, auto-return home below this
+CHARGE_FULL = 80.0  # % SoC, resume cleaning above this
+CHARGE_RATE = 10.0  # % per minute charge rate at the dock
+# The robot cannot wet-clean without water, so an empty tank sends it home to
+# refill in the same way a flat battery sends it home to charge.
+WATER_THRESHOLD = 15.0  # % tank, auto-return home below this
+WATER_FULL = 90.0  # % tank, resume cleaning above this
+REFILL_RATE = 25.0  # % per minute refill rate at the dock
 
 
 class RobotSimulator:
@@ -196,41 +201,59 @@ class RobotSimulator:
                 self._update_consumables(s)
                 return
 
-            # Auto-return home when battery is low (fault injection overrides this)
-            if (
-                s.battery_soc < CHARGE_THRESHOLD
-                and not s.returning_home
-                and not s.inject_low_battery
-                and s.mode == "CLEANING"
-            ):
+            # Auto-return home when a consumable runs low. Injected low battery
+            # is a fault demonstration, so it must not trigger the normal
+            # recovery behaviour.
+            low_battery = s.battery_soc < CHARGE_THRESHOLD and not s.inject_low_battery
+            low_water = s.water_level_pct < WATER_THRESHOLD
+            if (low_battery or low_water) and not s.returning_home and s.mode == "CLEANING":
                 s.returning_home = True
                 s.mode = "RETURNING"
-                logger.info(
-                    "Battery %.1f%% < %.0f%% — returning home to charge",
-                    s.battery_soc,
-                    CHARGE_THRESHOLD,
-                )
+                if low_battery and low_water:
+                    reason = (
+                        f"battery {s.battery_soc:.1f}% and water {s.water_level_pct:.1f}% both low"
+                    )
+                elif low_battery:
+                    reason = f"battery {s.battery_soc:.1f}% below {CHARGE_THRESHOLD:.0f}%"
+                else:
+                    reason = f"water {s.water_level_pct:.1f}% below {WATER_THRESHOLD:.0f}%"
+                logger.info("Returning to the dock: %s", reason)
 
-            # Charging at home station
+            # Servicing at the dock: charge the battery and refill the tank.
+            # Cleaning only resumes once both are sufficiently replenished.
             if (
                 s.row == gm.HOME_ROW
                 and s.col == gm.HOME_COL
-                and s.mode in ("RETURNING", "CHARGING")
+                and s.mode in ("RETURNING", "CHARGING", "REFILLING")
             ):
-                if s.battery_soc < CHARGE_FULL:
+                needs_charge = s.battery_soc < CHARGE_FULL
+                needs_water = s.water_level_pct < WATER_FULL
+
+                if needs_charge or needs_water:
                     s.returning_home = False
-                    s.mode = "CHARGING"
+                    # Report the limiting consumable, so the operator can see
+                    # why the robot is still at the dock.
+                    s.mode = "CHARGING" if needs_charge else "REFILLING"
                     s.speed_mps = 0.0
                     s.brush_on = False
                     s.pump_on = False
-                    s.battery_soc = min(
-                        100.0, s.battery_soc + CHARGE_RATE * TELEMETRY_INTERVAL / 60.0
-                    )
+                    if needs_charge:
+                        s.battery_soc = min(
+                            100.0, s.battery_soc + CHARGE_RATE * TELEMETRY_INTERVAL / 60.0
+                        )
+                    if needs_water:
+                        s.water_level_pct = min(
+                            100.0, s.water_level_pct + REFILL_RATE * TELEMETRY_INTERVAL / 60.0
+                        )
                     return
                 else:
                     s.mode = "CLEANING"
                     s.brush_on = True
-                    logger.info("Battery charged to %.1f%% — resuming cleaning", s.battery_soc)
+                    logger.info(
+                        "Servicing complete: battery %.1f%%, water %.1f%%, resuming cleaning",
+                        s.battery_soc,
+                        s.water_level_pct,
+                    )
 
             # Fault injections
             if s.inject_obstacle:
@@ -317,9 +340,10 @@ class RobotSimulator:
         manually still drains its battery and heats its motor. Must be called
         with the state lock already held.
         """
-        # Battery drain (suppressed while charging)
+        # Battery drain, suppressed while the robot sits on the dock, where it
+        # is on mains power whether it is charging or refilling.
         drain = 0.05 + (0.02 if s.brush_on else 0.0) + (0.01 if s.pump_on else 0.0)
-        if not s.inject_low_battery and s.mode != "CHARGING":
+        if not s.inject_low_battery and s.mode not in ("CHARGING", "REFILLING"):
             s.battery_soc = max(0.0, s.battery_soc - drain * TELEMETRY_INTERVAL / 60.0)
         s.battery_v = 10.0 + s.battery_soc / 100.0 * 2.6
         s.battery_a = 1.2 + (0.3 if s.brush_on else 0.0)
@@ -333,8 +357,12 @@ class RobotSimulator:
             120.0, max(20.0, s.motor_temperature_c + heat * TELEMETRY_INTERVAL / 60.0 - cool)
         )
 
-        # Water consumption
-        if s.pump_on:
+        # Water consumption. The injected fault drains the tank rapidly so the
+        # return-to-dock behaviour can be demonstrated, but it is suppressed on
+        # the dock so the refill is not fighting the drain.
+        if s.inject_low_water and s.mode not in ("CHARGING", "REFILLING"):
+            s.water_level_pct = max(0.0, s.water_level_pct - 5.0)
+        elif s.pump_on:
             s.water_level_pct = max(0.0, s.water_level_pct - 0.1)
 
         s.dirt_score = float(self._dirt_map[s.row, s.col])
@@ -460,10 +488,13 @@ class RobotSimulator:
                 s.inject_motor_overload = True
             elif fault == "battery":
                 s.inject_low_battery = True
+            elif fault == "water":
+                s.inject_low_water = True
             elif fault == "clear":
                 s.inject_obstacle = False
                 s.inject_motor_overload = False
                 s.inject_low_battery = False
+                s.inject_low_water = False
 
     @property
     def state(self) -> RobotPhysicsState:

@@ -97,7 +97,7 @@ def test_unknown_fault_is_rejected() -> None:
     assert r.status_code == 400
 
 
-@pytest.mark.parametrize("fault", ["obstacle", "motor", "battery", "clear"])
+@pytest.mark.parametrize("fault", ["obstacle", "motor", "battery", "water", "clear"])
 def test_supported_faults(fault: str) -> None:
     assert fault in web.VALID_FAULTS
 

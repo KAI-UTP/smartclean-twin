@@ -24,6 +24,7 @@ class OperationMode(str, Enum):
     CLEANING = "CLEANING"
     RETURNING = "RETURNING"
     CHARGING = "CHARGING"
+    REFILLING = "REFILLING"
     # Operator teleoperation: autonomous path following is suspended.
     MANUAL = "MANUAL"
 

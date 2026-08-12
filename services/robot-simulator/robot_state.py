@@ -52,6 +52,9 @@ class RobotPhysicsState:
     inject_obstacle: bool = False
     inject_motor_overload: bool = False
     inject_low_battery: bool = False
+    # Drains the tank quickly so the return-to-dock and refill behaviour can be
+    # demonstrated without waiting for normal consumption.
+    inject_low_water: bool = False
 
     _lock: threading.Lock = field(default_factory=threading.Lock, repr=False, compare=False)
 

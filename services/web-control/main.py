@@ -166,7 +166,7 @@ class FaultRequest(BaseModel):
     fault: str
 
 
-VALID_FAULTS = {"obstacle", "motor", "battery", "clear"}
+VALID_FAULTS = {"obstacle", "motor", "battery", "water", "clear"}
 
 
 @app.post("/api/fault")

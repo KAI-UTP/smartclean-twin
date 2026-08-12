@@ -153,6 +153,7 @@ def evaluate(
         "CLEANING": OperationMode.CLEANING,
         "RETURNING": OperationMode.RETURNING,
         "CHARGING": OperationMode.CHARGING,
+        "REFILLING": OperationMode.REFILLING,
         "MANUAL": OperationMode.MANUAL,
     }
     operation_mode = mode_map.get(raw_mode, OperationMode.IDLE)
