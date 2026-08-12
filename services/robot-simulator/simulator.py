@@ -133,10 +133,21 @@ class RobotSimulator:
                 s.speed_mps = 0.0
                 logger.info("Manual control enabled by operator")
             elif command == "AUTO_MODE":
-                # Hand control back; cleaning resumes from the current path index.
+                # Hand control back. The stored path index still points at the
+                # waypoint the robot was heading for before the operator took
+                # over, which may now be far away, so resume from the waypoint
+                # nearest to where the robot actually is. Without this the robot
+                # beelines back across the room to rejoin its old position.
                 s.manual_mode = False
                 s.mode = "CLEANING"
-                logger.info("Autonomous control restored")
+                s.path_index = self._nearest_path_index(s.row, s.col)
+                s.ticks_in_cell = 0
+                logger.info(
+                    "Autonomous control restored, resuming at path index %d for cell (%d,%d)",
+                    s.path_index,
+                    s.row,
+                    s.col,
+                )
             elif command in MANUAL_MOVES:
                 if not s.manual_mode:
                     logger.warning("%s rejected: robot is not in manual mode", command)
@@ -146,6 +157,22 @@ class RobotSimulator:
                 logger.warning("Unknown command: %s", command)
                 return False
         return True
+
+    def _nearest_path_index(self, row: int, col: int) -> int:
+        """Index of the cleaning waypoint closest to the given cell.
+
+        Cells that have not been cleaned yet are preferred, so handing control
+        back does not skip work that still needs doing. Distance is Manhattan
+        because the robot moves on a grid.
+        """
+        best_index, best_key = 0, None
+        for index, (p_row, p_col) in enumerate(self._path):
+            distance = abs(p_row - row) + abs(p_col - col)
+            already_cleaned = (p_row, p_col) in self._cleaned
+            key = (already_cleaned, distance, index)
+            if best_key is None or key < best_key:
+                best_index, best_key = index, key
+        return best_index
 
     def _manual_step(self, s: RobotPhysicsState, command: str) -> bool:
         """Move one grid cell under operator control.

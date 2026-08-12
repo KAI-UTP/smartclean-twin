@@ -219,3 +219,62 @@ def test_all_eight_directions_are_defined(sim: RobotSimulator) -> None:
     assert len(simmod.MANUAL_MOVES) == 8
     headings = sorted(h for _, _, h in simmod.MANUAL_MOVES.values())
     assert headings == [0.0, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0]
+
+
+# ── returning to autonomous control ───────────────────────────────────────────
+
+
+def test_auto_mode_resumes_from_where_the_robot_actually_is(sim: RobotSimulator) -> None:
+    """The robot must not beeline back to its pre-manual waypoint."""
+    far_index = len(sim._path) - 1  # was heading to the far end of the room
+    sim.state.path_index = far_index
+    far_target = sim._path[far_index]
+
+    sim._apply_command("MANUAL_MODE")
+    _place(sim, 2, 2)  # operator parks it here
+    sim._apply_command("AUTO_MODE")
+
+    resumed = sim._path[sim.state.path_index]
+    distance_to_resumed = abs(resumed[0] - 2) + abs(resumed[1] - 2)
+    distance_to_old = abs(far_target[0] - 2) + abs(far_target[1] - 2)
+
+    assert distance_to_resumed <= distance_to_old, "should resume near the robot"
+    assert distance_to_resumed <= 2, "the resumed waypoint should be adjacent or on the cell"
+
+
+def test_auto_mode_does_not_move_the_robot(sim: RobotSimulator) -> None:
+    sim._apply_command("MANUAL_MODE")
+    _place(sim, 3, 7)
+    position = (sim.state.row, sim.state.col)
+
+    sim._apply_command("AUTO_MODE")
+
+    assert (sim.state.row, sim.state.col) == position, "handing back control must not teleport"
+
+
+def test_the_robot_does_not_jump_across_the_room_on_the_next_tick(
+    sim: RobotSimulator,
+) -> None:
+    """One tick may step one cell, never more."""
+    sim.state.path_index = len(sim._path) - 1
+    sim._apply_command("MANUAL_MODE")
+    _place(sim, 2, 2)
+    sim._apply_command("AUTO_MODE")
+
+    before = (sim.state.row, sim.state.col)
+    sim._update_physics()
+    after = (sim.state.row, sim.state.col)
+
+    step = abs(after[0] - before[0]) + abs(after[1] - before[1])
+    assert step <= 2, f"robot moved {step} cells in one tick, that is a jump"
+
+
+def test_nearest_index_prefers_a_cell_that_still_needs_cleaning(
+    sim: RobotSimulator,
+) -> None:
+    target = sim._path[0]
+    sim._cleaned.add(target)  # mark the closest waypoint as already done
+
+    index = sim._nearest_path_index(target[0], target[1])
+
+    assert sim._path[index] not in sim._cleaned or len(sim._cleaned) == len(sim._path)
