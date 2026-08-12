@@ -21,12 +21,14 @@ import csv
 import io
 import logging
 import os
+import secrets
 import time
 from typing import Any
 
 import httpx
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -48,9 +50,39 @@ ROBOT_ID = os.environ.get("ROBOT_ID", "SCR01")
 
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 
+# Optional password gate. Left unset the console is open, which is fine on a
+# laptop or a private network. It must be set before the console is exposed
+# beyond the local machine, for example through a tunnel, because these
+# endpoints can drive the robot.
+CONSOLE_PASSWORD = os.environ.get("CONSOLE_PASSWORD", "").strip()
+CONSOLE_USER = os.environ.get("CONSOLE_USER", "operator").strip()
+
 _start_time = time.monotonic()
 
 app = FastAPI(title="SmartClean Web Control Panel", version="1.0")
+_security = HTTPBasic(auto_error=False)
+
+
+def require_login(
+    credentials: HTTPBasicCredentials | None = Depends(_security),
+) -> None:
+    """Password gate, active only when CONSOLE_PASSWORD is set.
+
+    Comparison uses compare_digest so a wrong password cannot be discovered by
+    timing the response.
+    """
+    if not CONSOLE_PASSWORD:
+        return
+    ok = credentials is not None and (
+        secrets.compare_digest(credentials.username, CONSOLE_USER)
+        and secrets.compare_digest(credentials.password, CONSOLE_PASSWORD)
+    )
+    if not ok:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required",
+            headers={"WWW-Authenticate": "Basic"},
+        )
 
 
 # ── InfluxDB helpers ──────────────────────────────────────────────────────────
@@ -104,7 +136,7 @@ def health() -> dict:
 
 
 @app.get("/api/state")
-async def get_state() -> dict:
+async def get_state(_: None = Depends(require_login)) -> dict:
     """Everything the console needs, in one round trip."""
     async with httpx.AsyncClient() as client:
         telemetry = await _query_latest(client, "robot_telemetry")
@@ -159,7 +191,7 @@ MACROS: dict[str, list[str]] = {
 
 
 @app.post("/api/command")
-async def send_command(req: CommandRequest) -> dict:
+async def send_command(req: CommandRequest, _: None = Depends(require_login)) -> dict:
     """Forward an operator command to the Command API and return its ACK."""
     if req.command not in VALID_COMMANDS:
         raise HTTPException(status_code=400, detail=f"Unknown command: {req.command}")
@@ -191,7 +223,7 @@ async def _issue(client: httpx.AsyncClient, command: str) -> dict:
 
 
 @app.post("/api/macro")
-async def run_macro(req: MacroRequest) -> dict:
+async def run_macro(req: MacroRequest, _: None = Depends(require_login)) -> dict:
     """Run a named command sequence and return every acknowledgement."""
     if req.macro not in MACROS:
         raise HTTPException(status_code=400, detail=f"Unknown macro: {req.macro}")
@@ -244,7 +276,7 @@ VALID_FAULTS = {"obstacle", "motor", "battery", "water", "clear"}
 
 
 @app.post("/api/fault")
-async def inject_fault(req: FaultRequest) -> dict:
+async def inject_fault(req: FaultRequest, _: None = Depends(require_login)) -> dict:
     """Forward a fault injection to the Robot Simulator (demonstration use)."""
     if req.fault not in VALID_FAULTS:
         raise HTTPException(status_code=400, detail=f"Unknown fault: {req.fault}")
@@ -264,7 +296,7 @@ class WhatIfRequest(BaseModel):
 
 
 @app.post("/api/whatif")
-async def whatif(req: WhatIfRequest) -> dict:
+async def whatif(req: WhatIfRequest, _: None = Depends(require_login)) -> dict:
     """Forward a what-if scenario to the AI service."""
     async with httpx.AsyncClient() as client:
         try:
@@ -275,7 +307,7 @@ async def whatif(req: WhatIfRequest) -> dict:
 
 
 @app.get("/api/history")
-async def history() -> list[dict]:
+async def history(_: None = Depends(require_login)) -> list[dict]:
     """Recent command history, newest first."""
     async with httpx.AsyncClient() as client:
         try:
@@ -293,7 +325,7 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 @app.get("/")
-def index() -> FileResponse:
+def index(_: None = Depends(require_login)) -> FileResponse:
     return FileResponse(os.path.join(STATIC_DIR, "index.html"))
 
 

@@ -180,6 +180,10 @@ services:
     environment:
       WEB_CONTROL_PORT: "8005"
       ROBOT_ID: ${ROBOT_ID:-SCR01}
+      # Password gate. Empty means the console is open, which is fine on
+      # this laptop. Set it before exposing the console through a tunnel.
+      CONSOLE_USER: ${CONSOLE_USER:-operator}
+      CONSOLE_PASSWORD: ${CONSOLE_PASSWORD:-}
       COMMAND_API_URL: http://command-api:8000
       SIMULATOR_URL: http://robot-simulator:8004
       AI_SERVICE_URL: http://ai-service:8003

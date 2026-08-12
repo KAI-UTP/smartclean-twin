@@ -212,3 +212,25 @@ def test_access_reports_the_lan_address_when_opened_from_a_phone() -> None:
 def test_all_eight_directions_are_offered_by_the_console() -> None:
     moves = {c for c in web.VALID_COMMANDS if c.startswith("MOVE_")}
     assert len(moves) == 8
+
+
+# ── optional password gate ────────────────────────────────────────────────────
+
+
+def test_the_gate_is_off_by_default_so_local_use_is_unchanged() -> None:
+    assert web.CONSOLE_PASSWORD == "", "the console must be open unless a password is set"
+    assert client.get("/api/access", headers={"Host": "localhost:8005"}).status_code == 200
+
+
+def test_the_gate_rejects_a_wrong_password_when_enabled(monkeypatch) -> None:
+    monkeypatch.setattr(web, "CONSOLE_PASSWORD", "s3cret")
+    monkeypatch.setattr(web, "CONSOLE_USER", "operator")
+
+    assert client.get("/api/state").status_code == 401
+    assert client.get("/api/state", auth=("operator", "wrong")).status_code == 401
+    assert client.get("/", auth=("wrong", "s3cret")).status_code == 401
+
+
+def test_health_stays_open_so_monitoring_keeps_working(monkeypatch) -> None:
+    monkeypatch.setattr(web, "CONSOLE_PASSWORD", "s3cret")
+    assert client.get("/health").status_code == 200
