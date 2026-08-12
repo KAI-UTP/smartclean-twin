@@ -185,6 +185,13 @@ def issue_command(req: CommandRequest) -> CommandResponse:
         RobotCommand.RESUME,
         RobotCommand.STOP,
         RobotCommand.RETURN_HOME,
+        # Manual teleoperation is motion control, so it uses the motion topic.
+        RobotCommand.MANUAL_MODE,
+        RobotCommand.AUTO_MODE,
+        RobotCommand.MOVE_UP,
+        RobotCommand.MOVE_DOWN,
+        RobotCommand.MOVE_LEFT,
+        RobotCommand.MOVE_RIGHT,
     }
     topic = Topics.COMMAND_MOTION if req.command in motion_commands else Topics.COMMAND_CLEANING
 

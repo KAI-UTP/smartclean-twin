@@ -84,6 +84,31 @@
       <div id="ackBox" class="ack">Awaiting a command.</div>
     </section>
 
+    <!-- Manual driving -->
+    <section class="card">
+      <h2>Manual control <span id="modeTag" class="tag auto">autonomous</span></h2>
+      <p class="hint">Take over from the cleaning path and drive the robot
+        yourself. Each press moves it one grid cell (0.5 m). A move into a wall
+        or a desk is refused by the robot, not by this page.</p>
+
+      <div class="btn-group">
+        <button class="btn warn" id="btnManual">Take manual control</button>
+        <button class="btn go"   id="btnAuto" disabled>Return to autonomous</button>
+      </div>
+
+      <div class="dpad" id="dpad">
+        <button class="dbtn up"    data-move="MOVE_UP"    disabled title="Arrow Up">&#9650;</button>
+        <button class="dbtn left"  data-move="MOVE_LEFT"  disabled title="Arrow Left">&#9664;</button>
+        <div class="dcentre" id="dCentre">manual<br>off</div>
+        <button class="dbtn right" data-move="MOVE_RIGHT" disabled title="Arrow Right">&#9654;</button>
+        <button class="dbtn down"  data-move="MOVE_DOWN"  disabled title="Arrow Down">&#9660;</button>
+      </div>
+
+      <p class="hint centre">Keyboard arrow keys work too, once manual control
+        is enabled.</p>
+      <div id="moveBox" class="ack">Manual control is off.</div>
+    </section>
+
     <!-- Telemetry -->
     <section class="card">
       <h2>Telemetry</h2>

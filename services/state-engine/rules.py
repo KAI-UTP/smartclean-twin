@@ -152,6 +152,8 @@ def evaluate(
         "INSPECTING": OperationMode.INSPECTING,
         "CLEANING": OperationMode.CLEANING,
         "RETURNING": OperationMode.RETURNING,
+        "CHARGING": OperationMode.CHARGING,
+        "MANUAL": OperationMode.MANUAL,
     }
     operation_mode = mode_map.get(raw_mode, OperationMode.IDLE)
 

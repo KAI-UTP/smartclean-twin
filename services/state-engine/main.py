@@ -69,6 +69,7 @@ def _write_state(state_dict: dict) -> None:
             .field("battery_state", str(state_dict["battery_state"]))
             .field("mission_state", str(state_dict["mission_state"]))
             .field("motion_state", str(state_dict["motion_state"]))
+            .field("operation_mode", str(state_dict["operation_mode"]))
             .field("motor_health", str(state_dict["motor_health"]))
             .field("dirt_level", str(state_dict["dirt_level"]))
             .field("connection_state", str(state_dict["connection_state"]))

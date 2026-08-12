@@ -39,6 +39,9 @@ class RobotPhysicsState:
     paused: bool = False
     stopped: bool = False
     returning_home: bool = False
+    # True while the operator is driving the robot manually. Autonomous path
+    # following is suspended, but battery, motor and thermal physics continue.
+    manual_mode: bool = False
 
     # Internal
     sequence: int = 0

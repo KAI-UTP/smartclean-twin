@@ -23,6 +23,9 @@ class OperationMode(str, Enum):
     INSPECTING = "INSPECTING"
     CLEANING = "CLEANING"
     RETURNING = "RETURNING"
+    CHARGING = "CHARGING"
+    # Operator teleoperation: autonomous path following is suspended.
+    MANUAL = "MANUAL"
 
 
 class SafetyState(str, Enum):
@@ -87,6 +90,15 @@ class RobotCommand(str, Enum):
     BRUSH_OFF = "BRUSH_OFF"
     PUMP_ON = "PUMP_ON"
     PUMP_OFF = "PUMP_OFF"
+    # Manual teleoperation: the operator takes direct control of the robot.
+    # MANUAL_MODE suspends autonomous path following; MOVE_* steps the robot
+    # one grid cell in the named direction; AUTO_MODE hands control back.
+    MANUAL_MODE = "MANUAL_MODE"
+    AUTO_MODE = "AUTO_MODE"
+    MOVE_UP = "MOVE_UP"
+    MOVE_DOWN = "MOVE_DOWN"
+    MOVE_LEFT = "MOVE_LEFT"
+    MOVE_RIGHT = "MOVE_RIGHT"
 
 
 # ── Telemetry sub-models ──────────────────────────────────────────────────────

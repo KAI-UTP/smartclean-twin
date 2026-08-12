@@ -44,6 +44,14 @@ function render(d) {
 
   setTile($("tileMission"), $("missionState"), s.mission_state || "--", "info");
 
+  /* Keep the manual toggle honest: the robot's own mode is authoritative,
+     so if it leaves MANUAL for any reason the pad disarms itself. */
+  const opMode = t.mode || s.operation_mode;
+  if (typeof opMode === "string") {
+    const robotIsManual = opMode.toUpperCase() === "MANUAL";
+    if (robotIsManual !== manualOn) setManual(robotIsManual);
+  }
+
   const health = p.health_state || "--";
   setTile($("tileHealth"), $("healthState"), health,
     health === "NORMAL" ? "ok" : health === "WARNING" ? "warn" :
@@ -203,6 +211,98 @@ document.querySelectorAll("[data-fault]").forEach((b) => {
       : `Fault '${d.injected || b.dataset.fault}' injected.\n` +
         "Watch the status strip above, the Grafana dashboard and the 3D scene.";
   });
+});
+
+/* ------------------------------------------------- manual teleoperation */
+
+let manualOn = false;
+
+function setManual(on) {
+  manualOn = on;
+  $("btnManual").disabled = on;
+  $("btnAuto").disabled = !on;
+  document.querySelectorAll(".dbtn").forEach((b) => {
+    b.disabled = !on;
+    b.classList.toggle("armed", on);
+  });
+  $("modeTag").textContent = on ? "manual" : "autonomous";
+  $("modeTag").className = "tag " + (on ? "manual" : "auto");
+  $("dCentre").innerHTML = on ? "manual<br>ON" : "manual<br>off";
+}
+
+async function setMode(cmd) {
+  const box = $("moveBox");
+  const d = await post("/api/command", { command: cmd }, box,
+                       cmd === "MANUAL_MODE" ? "Taking manual control"
+                                             : "Returning to autonomous");
+  if (!d) return;
+  const ok = d.ack_received && d.ack_accepted;
+  setManual(cmd === "MANUAL_MODE" && ok);
+  box.className = "ack " + (ok ? "ok" : "bad");
+  box.textContent = cmd === "MANUAL_MODE"
+    ? (ok ? "Manual control enabled. Use the pad or the arrow keys.\n" +
+            "Autonomous path following is suspended."
+          : "The robot did not accept manual control.")
+    : (ok ? "Autonomous control restored. Cleaning resumes from the current path position."
+          : "The robot did not accept the mode change.");
+  loadHistory();
+}
+
+async function move(cmd, btn) {
+  if (!manualOn) return;
+  btn.classList.add("pressed");
+  setTimeout(() => btn.classList.remove("pressed"), 160);
+
+  const box = $("moveBox");
+  let d = null;
+  try {
+    const r = await fetch("/api/command", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ command: cmd }),
+    });
+    d = await r.json();
+  } catch (e) {
+    box.className = "ack bad";
+    box.textContent = "Move failed: " + e.message;
+    return;
+  }
+
+  /* The robot refuses a move into a wall or a desk: ack_accepted is false. */
+  const blocked = d.ack_received && d.ack_accepted === false;
+  if (blocked) {
+    btn.classList.add("blocked");
+    setTimeout(() => btn.classList.remove("blocked"), 420);
+  }
+  box.className = "ack " + (blocked ? "bad" : "ok");
+  const dir = cmd.replace("MOVE_", "").toLowerCase();
+  box.textContent = blocked
+    ? `Move ${dir} refused by the robot: a wall or a desk is in the way.\n` +
+      `The robot turned to face it but did not move.`
+    : `Moved one cell ${dir}. Command ${d.command_id} acknowledged.`;
+  loadHistory();
+}
+
+$("btnManual").addEventListener("click", () => setMode("MANUAL_MODE"));
+$("btnAuto").addEventListener("click", () => setMode("AUTO_MODE"));
+
+document.querySelectorAll(".dbtn").forEach((b) => {
+  b.addEventListener("click", () => move(b.dataset.move, b));
+});
+
+/* Arrow keys drive the robot once manual control is on. */
+const KEY_TO_MOVE = {
+  ArrowUp: "MOVE_UP",
+  ArrowDown: "MOVE_DOWN",
+  ArrowLeft: "MOVE_LEFT",
+  ArrowRight: "MOVE_RIGHT",
+};
+document.addEventListener("keydown", (e) => {
+  const cmd = KEY_TO_MOVE[e.key];
+  if (!cmd || !manualOn) return;
+  if (e.target.tagName === "INPUT") return;   // do not hijack the sliders
+  e.preventDefault();
+  move(cmd, document.querySelector(`[data-move="${cmd}"]`));
 });
 
 ["Temp", "Curr", "Soc", "Water"].forEach((k) => {

@@ -104,9 +104,67 @@ class RobotSimulator:
                 s.pump_on = True
             elif command == "PUMP_OFF":
                 s.pump_on = False
+            elif command == "MANUAL_MODE":
+                # Operator takes over: stop following the cleaning path.
+                s.manual_mode = True
+                s.paused = False
+                s.stopped = False
+                s.returning_home = False
+                s.mode = "MANUAL"
+                s.speed_mps = 0.0
+                logger.info("Manual control enabled by operator")
+            elif command == "AUTO_MODE":
+                # Hand control back; cleaning resumes from the current path index.
+                s.manual_mode = False
+                s.mode = "CLEANING"
+                logger.info("Autonomous control restored")
+            elif command in ("MOVE_UP", "MOVE_DOWN", "MOVE_LEFT", "MOVE_RIGHT"):
+                if not s.manual_mode:
+                    logger.warning("%s rejected: robot is not in manual mode", command)
+                    return False
+                return self._manual_step(s, command)
             else:
                 logger.warning("Unknown command: %s", command)
                 return False
+        return True
+
+    def _manual_step(self, s: RobotPhysicsState, command: str) -> bool:
+        """Move one grid cell under operator control.
+
+        The move is refused if the target cell is a wall or a desk, so manual
+        driving cannot put the robot somewhere the physical robot could not go.
+        Must be called with the state lock already held.
+        """
+        # Grid convention: x_m = col * CELL_SIZE_M, y_m = row * CELL_SIZE_M.
+        # Heading matches the autonomous path: atan2(d_col, d_row) in degrees.
+        moves = {
+            "MOVE_UP": (1, 0, 0.0),  # +row, north
+            "MOVE_RIGHT": (0, 1, 90.0),  # +col, east
+            "MOVE_DOWN": (-1, 0, 180.0),  # -row, south
+            "MOVE_LEFT": (0, -1, 270.0),  # -col, west
+        }
+        d_row, d_col, heading = moves[command]
+        new_row, new_col = s.row + d_row, s.col + d_col
+
+        if not gm.is_accessible(new_row, new_col):
+            s.heading_deg = heading  # turn to face the obstruction, but do not move
+            s.speed_mps = 0.0
+            s.obstacle_cm = 20.0
+            logger.info("Manual move %s blocked at (%d,%d)", command, new_row, new_col)
+            return False
+
+        s.row, s.col = new_row, new_col
+        s.heading_deg = heading
+        s.speed_mps = 0.2
+        s.obstacle_cm = 200.0
+        s.ticks_in_cell = 0
+
+        # Manual driving still cleans, so coverage reflects what the robot did.
+        if s.brush_on:
+            cell = (s.row, s.col)
+            if cell not in self._cleaned:
+                self._cleaned.add(cell)
+                self._dirt_map[s.row, s.col] = 0.0
         return True
 
     def _publish_ack(self, cmd_id: str, cmd: str, accepted: bool) -> None:
@@ -127,6 +185,15 @@ class RobotSimulator:
         with s.lock():
             if s.stopped or s.paused:
                 s.speed_mps = 0.0
+                return
+
+            # Manual teleoperation: the operator steers, so no autonomous
+            # navigation happens. Movement is applied by _manual_step when a
+            # MOVE_* command arrives; here we only decay speed and keep the
+            # battery, motor and water models running.
+            if s.manual_mode:
+                s.speed_mps = 0.0
+                self._update_consumables(s)
                 return
 
             # Auto-return home when battery is low (fault injection overrides this)
@@ -241,28 +308,37 @@ class RobotSimulator:
                 angle = math.degrees(math.atan2(target_col - s.col, target_row - s.row))
                 s.heading_deg = angle % 360.0
 
-            # Battery drain (suppressed while charging)
-            drain = 0.05 + (0.02 if s.brush_on else 0.0) + (0.01 if s.pump_on else 0.0)
-            if not s.inject_low_battery and s.mode != "CHARGING":
-                s.battery_soc = max(0.0, s.battery_soc - drain * TELEMETRY_INTERVAL / 60.0)
-            s.battery_v = 10.0 + s.battery_soc / 100.0 * 2.6
-            s.battery_a = 1.2 + (0.3 if s.brush_on else 0.0)
+            self._update_consumables(s)
 
-            # Motor temperature
-            if not s.inject_motor_overload:
-                s.motor_current_a = 0.6 + (0.3 if s.brush_on else 0.0)
-            heat = s.motor_current_a * 5.0
-            cool = (s.motor_temperature_c - 25.0) * 0.05
-            s.motor_temperature_c = min(
-                120.0, max(20.0, s.motor_temperature_c + heat * TELEMETRY_INTERVAL / 60.0 - cool)
-            )
+    def _update_consumables(self, s: RobotPhysicsState) -> None:
+        """Battery, motor thermal and water models.
 
-            # Water consumption
-            if s.pump_on:
-                s.water_level_pct = max(0.0, s.water_level_pct - 0.1)
+        These run every tick regardless of who is steering, so a robot driven
+        manually still drains its battery and heats its motor. Must be called
+        with the state lock already held.
+        """
+        # Battery drain (suppressed while charging)
+        drain = 0.05 + (0.02 if s.brush_on else 0.0) + (0.01 if s.pump_on else 0.0)
+        if not s.inject_low_battery and s.mode != "CHARGING":
+            s.battery_soc = max(0.0, s.battery_soc - drain * TELEMETRY_INTERVAL / 60.0)
+        s.battery_v = 10.0 + s.battery_soc / 100.0 * 2.6
+        s.battery_a = 1.2 + (0.3 if s.brush_on else 0.0)
 
-            s.dirt_score = float(self._dirt_map[s.row, s.col])
-            s.sequence += 1
+        # Motor temperature
+        if not s.inject_motor_overload:
+            s.motor_current_a = 0.6 + (0.3 if s.brush_on else 0.0)
+        heat = s.motor_current_a * 5.0
+        cool = (s.motor_temperature_c - 25.0) * 0.05
+        s.motor_temperature_c = min(
+            120.0, max(20.0, s.motor_temperature_c + heat * TELEMETRY_INTERVAL / 60.0 - cool)
+        )
+
+        # Water consumption
+        if s.pump_on:
+            s.water_level_pct = max(0.0, s.water_level_pct - 0.1)
+
+        s.dirt_score = float(self._dirt_map[s.row, s.col])
+        s.sequence += 1
 
     def _scan_obstacle(self, row: int, col: int, target_row: int, target_col: int) -> float:
         """Return simulated obstacle distance in the direction of travel."""

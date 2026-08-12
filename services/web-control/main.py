@@ -133,6 +133,13 @@ VALID_COMMANDS = {
     "BRUSH_OFF",
     "PUMP_ON",
     "PUMP_OFF",
+    # Manual teleoperation
+    "MANUAL_MODE",
+    "AUTO_MODE",
+    "MOVE_UP",
+    "MOVE_DOWN",
+    "MOVE_LEFT",
+    "MOVE_RIGHT",
 }
 
 
