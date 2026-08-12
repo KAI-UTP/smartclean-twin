@@ -10,6 +10,7 @@ SERVICES = {
     "State Engine": "http://localhost:8002/health",
     "AI Service": "http://localhost:8003/health",
     "Robot Simulator": "http://localhost:8004/health",
+    "Web Control": "http://localhost:8005/health",
 }
 
 
@@ -31,7 +32,9 @@ def _ingestion_url() -> str:
     return ""
 
 
-GRAFANA = "http://localhost:3000/api/health"
+# Grafana is published on 3001, not its container port 3000, because a native
+# Grafana install already holds 3000 on the development machine.
+GRAFANA = "http://localhost:3001/api/health"
 INFLUXDB = "http://localhost:8086/health"
 
 
