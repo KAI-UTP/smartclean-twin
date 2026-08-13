@@ -101,6 +101,11 @@ class RobotSimulator:
                 s.paused = False
                 s.stopped = False
                 s.returning_home = False
+                # Starting an autonomous mission also ends manual control.
+                # Without this the robot reports CLEANING while the physics
+                # loop stays in the manual branch, so it sits still and nothing
+                # on screen explains why.
+                self._leave_manual(s)
                 s.mode = "CLEANING"
             elif command == "PAUSE":
                 s.paused = True
@@ -113,6 +118,10 @@ class RobotSimulator:
                 s.speed_mps = 0.0
                 s.mode = "IDLE"
             elif command == "RETURN_HOME":
+                # Driving home is autonomous motion, so it also ends manual
+                # control. Otherwise the robot accepts the command, reports
+                # RETURNING, and never leaves the spot.
+                self._leave_manual(s)
                 s.returning_home = True
                 s.mode = "RETURNING"
             elif command == "BRUSH_ON":
@@ -138,10 +147,8 @@ class RobotSimulator:
                 # over, which may now be far away, so resume from the waypoint
                 # nearest to where the robot actually is. Without this the robot
                 # beelines back across the room to rejoin its old position.
-                s.manual_mode = False
+                self._leave_manual(s)
                 s.mode = "CLEANING"
-                s.path_index = self._nearest_path_index(s.row, s.col)
-                s.ticks_in_cell = 0
                 logger.info(
                     "Autonomous control restored, resuming at path index %d for cell (%d,%d)",
                     s.path_index,
@@ -157,6 +164,22 @@ class RobotSimulator:
                 logger.warning("Unknown command: %s", command)
                 return False
         return True
+
+    def _leave_manual(self, s: RobotPhysicsState) -> None:
+        """Hand control back to the navigation loop.
+
+        Every command that resumes autonomous motion goes through here, so a
+        robot can never be left reporting an autonomous mode while the physics
+        loop is still parked in the manual branch. Resuming picks the waypoint
+        nearest to where the robot actually is, otherwise it would drive back
+        across the room to rejoin the position it held before the operator took
+        over. Must be called with the state lock already held.
+        """
+        if not s.manual_mode:
+            return
+        s.manual_mode = False
+        s.path_index = self._nearest_path_index(s.row, s.col)
+        s.ticks_in_cell = 0
 
     def _nearest_path_index(self, row: int, col: int) -> int:
         """Index of the cleaning waypoint closest to the given cell.

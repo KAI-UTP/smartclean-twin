@@ -318,3 +318,78 @@ def test_telemetry_is_a_coherent_snapshot_under_concurrent_commands(
     finally:
         stop.set()
         driver.join(timeout=2)
+
+
+# -- commands that resume autonomous motion must also leave manual mode -------
+# Regression: START set mode to CLEANING but left manual_mode True, so the
+# physics loop stayed in the manual branch and the robot sat still while
+# reporting that it was cleaning. Pressing "Take manual control" and then a
+# quick action, which sends START, was enough to trigger it.
+
+
+def test_start_leaves_manual_mode(sim: RobotSimulator) -> None:
+    sim._apply_command("MANUAL_MODE")
+    assert sim.state.manual_mode is True
+
+    sim._apply_command("START")
+
+    assert sim.state.manual_mode is False
+    assert sim.state.mode == "CLEANING"
+
+
+def test_start_from_manual_actually_moves_the_robot(sim: RobotSimulator) -> None:
+    _place(sim, 4, 4)
+    sim._apply_command("MANUAL_MODE")
+    sim._apply_command("START")
+
+    before = (sim.state.row, sim.state.col)
+    for _ in range(6):
+        sim._update_physics()
+
+    assert (sim.state.row, sim.state.col) != before, "robot never moved after START"
+
+
+def test_return_home_leaves_manual_mode(sim: RobotSimulator) -> None:
+    sim._apply_command("MANUAL_MODE")
+
+    sim._apply_command("RETURN_HOME")
+
+    assert sim.state.manual_mode is False
+    assert sim.state.returning_home is True
+    assert sim.state.mode == "RETURNING"
+
+
+def test_return_home_from_manual_actually_drives_home(sim: RobotSimulator) -> None:
+    _place(sim, 6, 7)
+    sim._apply_command("MANUAL_MODE")
+    sim._apply_command("RETURN_HOME")
+
+    for _ in range(30):
+        sim._update_physics()
+
+    assert (sim.state.row, sim.state.col) == (gm.HOME_ROW, gm.HOME_COL)
+
+
+def test_start_resumes_from_the_nearest_waypoint(sim: RobotSimulator) -> None:
+    """START must not teleport the robot back to its pre-manual position."""
+    _place(sim, 1, 1)
+    sim._apply_command("MANUAL_MODE")
+    _place(sim, 6, 7)
+
+    sim._apply_command("START")
+    target_row, target_col = sim._path[sim.state.path_index]
+
+    assert abs(target_row - 6) + abs(target_col - 7) <= 2
+
+
+def test_leaving_manual_twice_is_harmless(sim: RobotSimulator) -> None:
+    """_leave_manual is called by three commands, so it must be idempotent."""
+    _place(sim, 5, 5)
+    sim._apply_command("MANUAL_MODE")
+    sim._apply_command("AUTO_MODE")
+    index_after_first = sim.state.path_index
+
+    sim._apply_command("START")
+
+    assert sim.state.manual_mode is False
+    assert sim.state.path_index == index_after_first
